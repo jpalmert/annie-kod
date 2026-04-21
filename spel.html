@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <title>Annies Rymdskjutare!</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        h1 {
+            color: #00e5ff;
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+        }
+        canvas {
+            border: 3px solid #00e5ff;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
+        }
+        #info {
+            color: #aaa;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+        #startBtn {
+            margin-top: 12px;
+            padding: 12px 30px;
+            font-size: 1.2em;
+            background: #00e5ff;
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #startBtn:hover {
+            background: #69f0ff;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Annies Rymdskjutare! 🚀</h1>
+    <canvas id="game" width="700" height="500"></canvas>
+    <div id="info">Piltangenter = flyga | Mellanslag = skjut</div>
+    <div style="margin-top: 8px; display: flex; gap: 10px;">
+        <button id="startBtn" onclick="startGame()">🚀 Starta Spelet!</button>
+        <button id="shopBtn" onclick="toggleShop()" style="padding: 12px 30px; font-size: 1.2em; background: #ffd700; color: #000; border: none; border-radius: 25px; cursor: pointer; font-weight: bold;">🛒 Butik</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let animationId;
+        let frameCount = 0;
+
+        const keys = {};
+
+        const ship = {
+            x: 100,
+            y: 250,
+            width: 40,
+            height: 30,
+            speed: 5,
+            flame: 0
+        };
+
+        let bullets = [];
+        let asteroids = [];
+        let stars = [];
+        let explosions = [];
+        let coins = [];
+        let gold = 0;
+        let shootCooldown = 0;
+        let ammo = 10;
+
+        // Butik
+        let shopOpen = false;
+        let shopSelection = 0;
+
+        // Skeppsfärger man kan köpa
+        const shipColors = [
+            { name: 'Blå (start)',   c1: '#0077cc', c2: '#00bbff', c3: '#00e5ff', stroke: '#69f0ff', cockpit: '#b3f5ff', owned: true, price: 0 },
+            { name: 'Rosa',          c1: '#cc0077', c2: '#ff44aa', c3: '#ff77cc', stroke: '#ffaadd', cockpit: '#ffddee', owned: false, price: 30 },
+            { name: 'Grön',          c1: '#007744', c2: '#00cc66', c3: '#00ff88', stroke: '#66ffaa', cockpit: '#ccffdd', owned: false, price: 30 },
+            { name: 'Lila',          c1: '#5500aa', c2: '#8833dd', c3: '#aa55ff', stroke: '#cc88ff', cockpit: '#eeccff', owned: false, price: 40 },
+            { name: 'Röd',           c1: '#aa2200', c2: '#dd4422', c3: '#ff6644', stroke: '#ff9977', cockpit: '#ffccbb', owned: false, price: 40 },
+            { name: 'Orange',        c1: '#cc5500', c2: '#ee7722', c3: '#ff9933', stroke: '#ffbb66', cockpit: '#ffddbb', owned: false, price: 35 },
+            { name: 'Guld',          c1: '#aa7700', c2: '#ddaa00', c3: '#ffd700', stroke: '#ffee66', cockpit: '#ffffcc', owned: false, price: 60 },
+        ];
+        let activeColor = 0;
+
+        // Skottuppgraderingar
+        const bulletUpgrades = [
+            { name: 'Vanligt skott',    desc: 'Ett litet skott',         owned: true,  price: 0,  bulletSize: 1, bulletCount: 1, bulletSpeed: 8,  cooldown: 12, color: '#0f0' },
+            { name: 'Snabbare skott',   desc: 'Skjuter snabbare!',      owned: false, price: 35, bulletSize: 1, bulletCount: 1, bulletSpeed: 11, cooldown: 8,  color: '#00ff88' },
+            { name: 'Stort skott',      desc: 'Större laser!',          owned: false, price: 45, bulletSize: 2, bulletCount: 1, bulletSpeed: 9,  cooldown: 10, color: '#ff0' },
+            { name: 'Dubbelskott',      desc: 'Två skott samtidigt!',   owned: false, price: 60, bulletSize: 1, bulletCount: 2, bulletSpeed: 9,  cooldown: 10, color: '#ff66ff' },
+            { name: 'Trippelskott',     desc: 'Tre skott i solfjäder!', owned: false, price: 80, bulletSize: 1, bulletCount: 3, bulletSpeed: 9,  cooldown: 11, color: '#ff3300' },
+            { name: 'Megaskott',        desc: 'Stort + trippel!',       owned: false, price: 120, bulletSize: 2, bulletCount: 3, bulletSpeed: 10, cooldown: 9,  color: '#00ffff' },
+        ];
+        let activeBullet = 0;
+
+        const shopItems = [];
+        function buildShopItems() {
+            shopItems.length = 0;
+            for (let i = 0; i < shipColors.length; i++) {
+                shopItems.push({ type: 'color', index: i });
+            }
+            for (let i = 0; i < bulletUpgrades.length; i++) {
+                shopItems.push({ type: 'bullet', index: i });
+            }
+        }
+        buildShopItems();
+
+        function toggleShop() {
+            if (!gameRunning) return;
+            shopOpen = !shopOpen;
+            shopSelection = 0;
+            canvas.focus();
+        }
+
+        canvas.setAttribute('tabindex', '0');
+
+        canvas.addEventListener('click', (e) => {
+            if (!shopOpen) return;
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            const ammoY = 105;
+            if (mx >= canvas.width / 2 - 120 && mx <= canvas.width / 2 + 120 && my >= ammoY - 15 && my <= ammoY + 15) {
+                shopSelection = shopItems.length;
+                buyAmmo();
+                return;
+            }
+
+            const leftX = 60;
+            const rightX = canvas.width / 2 + 20;
+            const startY = 140;
+
+            for (let i = 0; i < shipColors.length; i++) {
+                const y = startY + 28 + i * 32;
+                if (mx >= leftX - 10 && mx <= canvas.width / 2 && my >= y - 18 && my <= y + 10) {
+                    shopSelection = i;
+                    buyItem(shopItems[i]);
+                    return;
+                }
+            }
+
+            for (let i = 0; i < bulletUpgrades.length; i++) {
+                const y = startY + 28 + i * 52;
+                if (mx >= rightX - 10 && mx <= canvas.width && my >= y - 18 && my <= y + 28) {
+                    shopSelection = shipColors.length + i;
+                    buyItem(shopItems[shopSelection]);
+                    return;
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') e.preventDefault();
+
+            if (gameRunning && (e.key === 'b' || e.key === 'B')) {
+                toggleShop();
+            }
+
+            if (shopOpen) {
+                if (e.key === 'ArrowUp') {
+                    shopSelection = Math.max(0, shopSelection - 1);
+                    e.preventDefault();
+                }
+                if (e.key === 'ArrowDown') {
+                    shopSelection = Math.min(shopItems.length, shopSelection + 1);
+                    e.preventDefault();
+                }
+                if (e.key === 'Enter') {
+                    if (shopSelection === shopItems.length) {
+                        buyAmmo();
+                    } else {
+                        buyItem(shopItems[shopSelection]);
+                    }
+                }
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function buyAmmo() {
+            if (gold >= 5) {
+                gold -= 5;
+                ammo += 10;
+            }
+        }
+
+        function buyItem(item) {
+            if (item.type === 'color') {
+                const c = shipColors[item.index];
+                if (c.owned) {
+                    activeColor = item.index;
+                } else if (gold >= c.price) {
+                    gold -= c.price;
+                    c.owned = true;
+                    activeColor = item.index;
+                }
+            } else {
+                const b = bulletUpgrades[item.index];
+                if (b.owned) {
+                    activeBullet = item.index;
+                } else if (gold >= b.price) {
+                    gold -= b.price;
+                    b.owned = true;
+                    activeBullet = item.index;
+                }
+            }
+        }
+
+        function createStars() {
+            stars = [];
+            for (let i = 0; i < 120; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2.5 + 0.5,
+                    speed: Math.random() * 2 + 0.5,
+                    brightness: Math.random()
+                });
+            }
+        }
+
+        function spawnAsteroid() {
+            const size = Math.random() * 30 + 20;
+            asteroids.push({
+                x: canvas.width + size,
+                y: Math.random() * canvas.height,
+                size: size,
+                speed: Math.random() * 2 + 1 + level * 0.3,
+                rotation: 0,
+                rotSpeed: (Math.random() - 0.5) * 0.05,
+                vertices: generateAsteroidShape(size),
+                dy: (Math.random() - 0.5) * 1.5
+            });
+        }
+
+        function generateAsteroidShape(size) {
+            const points = [];
+            const numPoints = 8 + Math.floor(Math.random() * 5);
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                const r = size * (0.7 + Math.random() * 0.3);
+                points.push({ angle, r });
+            }
+            return points;
+        }
+
+        function spawnCoin() {
+            coins.push({
+                x: canvas.width + 15,
+                y: Math.random() * (canvas.height - 60) + 30,
+                size: 14,
+                speed: 2,
+                spin: Math.random() * Math.PI * 2,
+                bounce: Math.random() * Math.PI * 2
+            });
+        }
+
+        function addExplosion(x, y, size, color) {
+            for (let i = 0; i < size; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 4 + 1;
+                explosions.push({
+                    x, y,
+                    dx: Math.cos(angle) * speed,
+                    dy: Math.sin(angle) * speed,
+                    size: Math.random() * 4 + 1,
+                    color: color || (Math.random() > 0.5 ? '#ff6600' : '#ffcc00'),
+                    life: 1
+                });
+            }
+        }
+
+        function drawShip() {
+            ctx.save();
+            ctx.translate(ship.x, ship.y);
+
+            const col = shipColors[activeColor];
+
+            ship.flame += 0.3;
+            const flameSize = 12 + Math.sin(ship.flame) * 6;
+            ctx.beginPath();
+            ctx.moveTo(-20, -6);
+            ctx.lineTo(-20 - flameSize, 0);
+            ctx.lineTo(-20, 6);
+            ctx.closePath();
+            ctx.fillStyle = Math.sin(ship.flame) > 0 ? '#ff6600' : '#ffcc00';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(25, 0);
+            ctx.lineTo(-15, -18);
+            ctx.lineTo(-20, -12);
+            ctx.lineTo(-20, 12);
+            ctx.lineTo(-15, 18);
+            ctx.closePath();
+
+            const gradient = ctx.createLinearGradient(-20, 0, 25, 0);
+            gradient.addColorStop(0, col.c1);
+            gradient.addColorStop(0.5, col.c2);
+            gradient.addColorStop(1, col.c3);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.strokeStyle = col.stroke;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(5, 0, 8, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = col.cockpit;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawBullet(b) {
+            ctx.save();
+            const up = bulletUpgrades[activeBullet];
+            if (up.bulletSize === 2) {
+                ctx.beginPath();
+                ctx.moveTo(b.x + 14, b.y);
+                ctx.lineTo(b.x - 6, b.y - 4);
+                ctx.lineTo(b.x - 6, b.y + 4);
+                ctx.closePath();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(b.x + 10, b.y);
+                ctx.lineTo(b.x - 5, b.y - 2);
+                ctx.lineTo(b.x - 5, b.y + 2);
+                ctx.closePath();
+            }
+            ctx.fillStyle = up.color;
+            ctx.fill();
+            ctx.shadowColor = up.color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        function drawAsteroid(a) {
+            ctx.save();
+            ctx.translate(a.x, a.y);
+            ctx.rotate(a.rotation);
+
+            ctx.beginPath();
+            a.vertices.forEach((v, i) => {
+                const x = Math.cos(v.angle) * v.r;
+                const y = Math.sin(v.angle) * v.r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+
+            ctx.fillStyle = '#665544';
+            ctx.fill();
+            ctx.strokeStyle = '#998877';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(a.size * 0.2, -a.size * 0.1, a.size * 0.15, 0, Math.PI * 2);
+            ctx.fillStyle = '#554433';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(-a.size * 0.2, a.size * 0.2, a.size * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawCoin(c) {
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            c.spin += 0.06;
+            c.bounce += 0.05;
+
+            const squish = Math.abs(Math.cos(c.spin));
+            const bobY = Math.sin(c.bounce) * 3;
+
+            ctx.translate(0, bobY);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, c.size + 6, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.2)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(0, 0, c.size * squish, c.size, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+            ctx.strokeStyle = '#daa520';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            if (squish > 0.3) {
+                ctx.fillStyle = '#b8860b';
+                ctx.font = `bold ${Math.floor(14 * squish)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', 0, 1);
+            }
+
+            ctx.restore();
+        }
+
+        function drawHUD() {
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Poäng: ' + score, 15, 30);
+
+            ctx.fillStyle = '#aaa';
+            ctx.font = '18px Arial';
+            ctx.fillText('Nivå: ' + level, 15, 55);
+
+            ctx.fillStyle = '#ff4444';
+            ctx.font = '22px Arial';
+            ctx.textAlign = 'right';
+            let hearts = '';
+            for (let i = 0; i < lives; i++) hearts += '❤️ ';
+            ctx.fillText(hearts, canvas.width - 15, 30);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('💰 ' + gold, canvas.width / 2, 30);
+
+            ctx.fillStyle = '#888';
+            ctx.font = '14px Arial';
+            if (activeBullet > 0) {
+                ctx.fillText('🔫 Skott: ' + ammo, canvas.width / 2, 50);
+                if (ammo === 0) {
+                    ctx.fillStyle = '#ff4444';
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText('Slut! Byter till vanligt skott', canvas.width / 2, 68);
+                }
+            }
+        }
+
+        function drawShop() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 36px Arial';
+            ctx.fillText('🛒 BUTIKEN 🛒', canvas.width / 2, 45);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('💰 Ditt guld: ' + gold + '    🔫 Skott kvar: ' + ammo, canvas.width / 2, 75);
+
+            const leftX = 60;
+            const rightX = canvas.width / 2 + 20;
+            let startY = 105;
+
+            // Köp skott-knapp
+            const ammoY = startY;
+            const ammoIdx = shopItems.length - 1;
+            const ammoSelected = shopSelection === shopItems.length;
+            if (ammoSelected) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(canvas.width / 2 - 120, ammoY - 15, 240, 30);
+            }
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 18px Arial';
+            if (gold >= 5) {
+                ctx.fillStyle = '#0f0';
+            } else {
+                ctx.fillStyle = '#666';
+            }
+            ctx.fillText('🔫 Köp 10 skott — 💰5', canvas.width / 2, ammoY + 5);
+            if (ammoSelected) {
+                ctx.fillStyle = '#ff0';
+                ctx.fillText('▶', canvas.width / 2 - 130, ammoY + 5);
+            }
+            ctx.textAlign = 'left';
+            startY += 35;
+
+            // Färger (vänster kolumn)
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('🎨 Skeppsfärger:', leftX, startY);
+
+            for (let i = 0; i < shipColors.length; i++) {
+                const y = startY + 28 + i * 32;
+                const itemIdx = i;
+                const c = shipColors[i];
+                const selected = shopSelection === itemIdx;
+
+                if (selected) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.fillRect(leftX - 10, y - 18, canvas.width / 2 - 60, 28);
+                }
+
+                // Liten färgprov
+                ctx.fillStyle = c.c3;
+                ctx.fillRect(leftX, y - 10, 16, 16);
+                ctx.strokeStyle = c.stroke;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(leftX, y - 10, 16, 16);
+
+                ctx.font = '16px Arial';
+                if (c.owned && activeColor === i) {
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillText(c.name + ' ✓ AKTIV', leftX + 24, y + 3);
+                } else if (c.owned) {
+                    ctx.fillStyle = '#aaa';
+                    ctx.fillText(c.name + ' (ägd - välj!)', leftX + 24, y + 3);
+                } else if (gold >= c.price) {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(c.name + ' — 💰' + c.price, leftX + 24, y + 3);
+                } else {
+                    ctx.fillStyle = '#666';
+                    ctx.fillText(c.name + ' — 💰' + c.price, leftX + 24, y + 3);
+                }
+
+                if (selected) {
+                    ctx.fillStyle = '#ff0';
+                    ctx.fillText('▶', leftX - 8, y + 3);
+                }
+            }
+
+            // Skott (höger kolumn)
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 18px Arial';
+            ctx.fillText('🔫 Skottuppgraderingar:', rightX, startY);
+
+            for (let i = 0; i < bulletUpgrades.length; i++) {
+                const y = startY + 28 + i * 52;
+                const itemIdx = shipColors.length + i;
+                const b = bulletUpgrades[i];
+                const selected = shopSelection === itemIdx;
+
+                if (selected) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.fillRect(rightX - 10, y - 18, canvas.width / 2 - 40, 46);
+                }
+
+                // Liten skottfärgprov
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(rightX + 6, y - 2, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = 'bold 16px Arial';
+                if (b.owned && activeBullet === i) {
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillText(b.name + ' ✓ AKTIV', rightX + 20, y + 3);
+                } else if (b.owned) {
+                    ctx.fillStyle = '#aaa';
+                    ctx.fillText(b.name + ' (ägd - välj!)', rightX + 20, y + 3);
+                } else if (gold >= b.price) {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(b.name + ' — 💰' + b.price, rightX + 20, y + 3);
+                } else {
+                    ctx.fillStyle = '#666';
+                    ctx.fillText(b.name + ' — 💰' + b.price, rightX + 20, y + 3);
+                }
+
+                ctx.font = '13px Arial';
+                ctx.fillStyle = '#888';
+                ctx.fillText(b.desc, rightX + 20, y + 21);
+
+                if (selected) {
+                    ctx.fillStyle = '#ff0';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('▶', rightX - 8, y + 3);
+                }
+            }
+
+            // Instruktioner
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#aaa';
+            ctx.font = '16px Arial';
+            ctx.fillText('Klicka på det du vill köpa!  |  Klicka 🛒 Butik igen för att stänga', canvas.width / 2, canvas.height - 20);
+        }
+
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+        }
+
+        function update() {
+            if (shopOpen) return;
+
+            frameCount++;
+
+            if (keys['ArrowUp'] || keys['w']) ship.y -= ship.speed;
+            if (keys['ArrowDown'] || keys['s']) ship.y += ship.speed;
+            if (keys['ArrowLeft'] || keys['a']) ship.x -= ship.speed;
+            if (keys['ArrowRight'] || keys['d']) ship.x += ship.speed;
+
+            ship.x = Math.max(25, Math.min(canvas.width - 25, ship.x));
+            ship.y = Math.max(20, Math.min(canvas.height - 20, ship.y));
+
+            const up = bulletUpgrades[activeBullet];
+            if (shootCooldown > 0) shootCooldown--;
+            const needsAmmo = activeBullet > 0;
+            if (keys[' '] && shootCooldown <= 0 && (!needsAmmo || ammo > 0)) {
+                if (up.bulletCount === 1) {
+                    bullets.push({ x: ship.x + 25, y: ship.y, speed: up.bulletSpeed, dy: 0 });
+                } else if (up.bulletCount === 2) {
+                    bullets.push({ x: ship.x + 25, y: ship.y - 8, speed: up.bulletSpeed, dy: 0 });
+                    bullets.push({ x: ship.x + 25, y: ship.y + 8, speed: up.bulletSpeed, dy: 0 });
+                } else if (up.bulletCount >= 3) {
+                    bullets.push({ x: ship.x + 25, y: ship.y, speed: up.bulletSpeed, dy: 0 });
+                    bullets.push({ x: ship.x + 25, y: ship.y, speed: up.bulletSpeed, dy: -2 });
+                    bullets.push({ x: ship.x + 25, y: ship.y, speed: up.bulletSpeed, dy: 2 });
+                }
+                if (needsAmmo) {
+                    ammo--;
+                    if (ammo <= 0) activeBullet = 0;
+                }
+                shootCooldown = up.cooldown;
+            }
+
+            bullets.forEach(b => { b.x += b.speed; b.y += b.dy; });
+            bullets = bullets.filter(b => b.x < canvas.width + 10 && b.y > -10 && b.y < canvas.height + 10);
+
+            const spawnRate = Math.max(30, 80 - level * 5);
+            if (frameCount % spawnRate === 0) spawnAsteroid();
+
+            if (frameCount % 300 === 0) spawnCoin();
+
+            asteroids.forEach(a => {
+                a.x -= a.speed;
+                a.y += a.dy;
+                a.rotation += a.rotSpeed;
+                if (a.y < a.size) a.dy = Math.abs(a.dy);
+                if (a.y > canvas.height - a.size) a.dy = -Math.abs(a.dy);
+            });
+            asteroids = asteroids.filter(a => a.x > -50);
+
+            coins.forEach(c => c.x -= c.speed);
+            coins = coins.filter(c => c.x > -20);
+
+            const hitSize = up.bulletSize === 2 ? 8 : 0;
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    if (distance(bullets[j].x, bullets[j].y, asteroids[i].x, asteroids[i].y) < asteroids[i].size + hitSize) {
+                        addExplosion(asteroids[i].x, asteroids[i].y, 15);
+
+
+                        asteroids.splice(i, 1);
+                        bullets.splice(j, 1);
+                        score += 10;
+
+                        if (score > 0 && score % 100 === 0) {
+                            level++;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            for (let i = coins.length - 1; i >= 0; i--) {
+                if (distance(ship.x, ship.y, coins[i].x, coins[i].y) < 35) {
+                    gold += 5;
+                    addExplosion(coins[i].x, coins[i].y, 10, '#ffd700');
+                    coins.splice(i, 1);
+                }
+            }
+
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                if (distance(ship.x, ship.y, asteroids[i].x, asteroids[i].y) < asteroids[i].size + 15) {
+                    addExplosion(asteroids[i].x, asteroids[i].y, 25);
+                    asteroids.splice(i, 1);
+                    lives--;
+
+                    if (lives <= 0) {
+                        gameOver();
+                        return;
+                    }
+
+                    ship.x = 100;
+                    ship.y = canvas.height / 2;
+                }
+            }
+
+            stars.forEach(s => {
+                s.x -= s.speed;
+                s.brightness = 0.5 + Math.sin(frameCount * 0.02 + s.y) * 0.5;
+                if (s.x < 0) {
+                    s.x = canvas.width;
+                    s.y = Math.random() * canvas.height;
+                }
+            });
+
+            explosions.forEach(e => {
+                e.x += e.dx;
+                e.y += e.dy;
+                e.life -= 0.025;
+                e.size *= 0.98;
+            });
+            explosions = explosions.filter(e => e.life > 0);
+        }
+
+        function draw() {
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
+                ctx.fill();
+            });
+
+            explosions.forEach(e => {
+                ctx.globalAlpha = e.life;
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+                ctx.fillStyle = e.color;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            coins.forEach(drawCoin);
+            bullets.forEach(drawBullet);
+            asteroids.forEach(drawAsteroid);
+            drawShip();
+            drawHUD();
+
+            if (shopOpen) {
+                drawShop();
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+
+            addExplosion(ship.x, ship.y, 50);
+            draw();
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.textAlign = 'center';
+
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 52px Arial';
+            ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+
+            ctx.fillStyle = '#00e5ff';
+            ctx.font = 'bold 28px Arial';
+            ctx.fillText('Poäng: ' + score, canvas.width / 2, canvas.height / 2 + 10);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '22px Arial';
+            ctx.fillText('Nivå: ' + level + '  |  💰 Guld: ' + gold, canvas.width / 2, canvas.height / 2 + 45);
+
+            ctx.fillStyle = '#aaa';
+            ctx.font = '18px Arial';
+            ctx.fillText('Klicka på knappen för att spela igen!', canvas.width / 2, canvas.height / 2 + 85);
+
+            ctx.textAlign = 'left';
+
+            document.getElementById('startBtn').textContent = '🚀 Spela Igen!';
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            ship.x = 100;
+            ship.y = canvas.height / 2;
+            bullets = [];
+            asteroids = [];
+            explosions = [];
+            coins = [];
+            shootCooldown = 0;
+            frameCount = 0;
+            shopOpen = false;
+            gameRunning = true;
+            createStars();
+            document.getElementById('startBtn').textContent = '🚀 Starta Om';
+            gameLoop();
+        }
+
+        // Startskärm
+        createStars();
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
+            ctx.fill();
+        });
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText('🚀 Rymdskjutaren! 🚀', canvas.width / 2, canvas.height / 2 - 40);
+        ctx.fillStyle = '#aaa';
+        ctx.font = '20px Arial';
+        ctx.fillText('Skjut asteroider och överlev i rymden!', canvas.width / 2, canvas.height / 2 + 5);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '18px Arial';
+        ctx.fillText('💰 Samla guld och köp uppgraderingar i butiken!', canvas.width / 2, canvas.height / 2 + 35);
+        ctx.fillStyle = '#666';
+        ctx.font = '16px Arial';
+        ctx.fillText('Klicka 🛒 Butik-knappen för att handla!', canvas.width / 2, canvas.height / 2 + 60);
+        ctx.textAlign = 'left';
+    </script>
+</body>
+</html>
