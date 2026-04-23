@@ -2,8 +2,10 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Annies Rymdskjutare!</title>
     <style>
+        * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         body {
             margin: 0;
             background: #000;
@@ -25,6 +27,8 @@
             border: 3px solid #00e5ff;
             border-radius: 8px;
             box-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
+            max-width: 100vw;
+            max-height: 70vh;
         }
         #info {
             color: #aaa;
@@ -46,12 +50,18 @@
             background: #69f0ff;
             box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
         }
+        @media (max-width: 750px) {
+            h1 { font-size: 1.3em; margin-bottom: 4px; }
+            #info { display: none; }
+            canvas { border-width: 2px; max-height: 55vh; }
+            #startBtn { padding: 10px 22px; font-size: 1em; }
+        }
     </style>
 </head>
 <body>
     <h1>🚀 Annies Rymdskjutare! 🚀</h1>
     <canvas id="game" width="700" height="500"></canvas>
-    <div id="info">Piltangenter = flyga | Mellanslag = skjut</div>
+    <div id="info">Piltangenter/joystick = flyga | Mellanslag/knapp = skjut</div>
     <div style="margin-top: 8px; display: flex; gap: 10px;">
         <button id="startBtn" onclick="startGame()">🚀 Starta Spelet!</button>
         <button id="shopBtn" onclick="toggleShop()" style="padding: 12px 30px; font-size: 1.2em; background: #ffd700; color: #000; border: none; border-radius: 25px; cursor: pointer; font-weight: bold;">🛒 Butik</button>
@@ -746,6 +756,8 @@
             drawShip();
             drawHUD();
 
+            drawTouchControls();
+
             if (shopOpen) {
                 drawShop();
             }
@@ -807,6 +819,174 @@
             createStars();
             document.getElementById('startBtn').textContent = '🚀 Starta Om';
             gameLoop();
+        }
+
+        // === TOUCH-KONTROLLER ===
+        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Joystick-state
+        const joystick = { active: false, touchId: null, startX: 0, startY: 0, dx: 0, dy: 0, radius: 50 };
+        // Skjutknapp-state
+        const fireBtn = { active: false, touchId: null };
+
+        function getCanvasScale() {
+            const rect = canvas.getBoundingClientRect();
+            return { sx: canvas.width / rect.width, sy: canvas.height / rect.height, rect };
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const { sx, sy, rect } = getCanvasScale();
+            for (const t of e.changedTouches) {
+                const cx = (t.clientX - rect.left) * sx;
+                const cy = (t.clientY - rect.top) * sy;
+
+                // Höger halva = skjutknapp
+                if (cx > canvas.width / 2 && joystick.touchId !== t.identifier) {
+                    fireBtn.active = true;
+                    fireBtn.touchId = t.identifier;
+                    keys[' '] = true;
+                }
+                // Vänster halva = joystick
+                else if (cx <= canvas.width / 2 && fireBtn.touchId !== t.identifier) {
+                    joystick.active = true;
+                    joystick.touchId = t.identifier;
+                    joystick.startX = cx;
+                    joystick.startY = cy;
+                    joystick.dx = 0;
+                    joystick.dy = 0;
+                }
+
+                // Klicka i butik
+                if (shopOpen) {
+                    handleShopTouch(cx, cy);
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const { sx, sy, rect } = getCanvasScale();
+            for (const t of e.changedTouches) {
+                if (t.identifier === joystick.touchId && joystick.active) {
+                    const cx = (t.clientX - rect.left) * sx;
+                    const cy = (t.clientY - rect.top) * sy;
+                    joystick.dx = cx - joystick.startX;
+                    joystick.dy = cy - joystick.startY;
+                    // Begränsa till radie
+                    const dist = Math.sqrt(joystick.dx ** 2 + joystick.dy ** 2);
+                    if (dist > joystick.radius) {
+                        joystick.dx = (joystick.dx / dist) * joystick.radius;
+                        joystick.dy = (joystick.dy / dist) * joystick.radius;
+                    }
+                    // Sätt tangenttryck baserat på joystick
+                    keys['ArrowLeft'] = joystick.dx < -10;
+                    keys['ArrowRight'] = joystick.dx > 10;
+                    keys['ArrowUp'] = joystick.dy < -10;
+                    keys['ArrowDown'] = joystick.dy > 10;
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                if (t.identifier === joystick.touchId) {
+                    joystick.active = false;
+                    joystick.touchId = null;
+                    joystick.dx = 0;
+                    joystick.dy = 0;
+                    keys['ArrowLeft'] = false;
+                    keys['ArrowRight'] = false;
+                    keys['ArrowUp'] = false;
+                    keys['ArrowDown'] = false;
+                }
+                if (t.identifier === fireBtn.touchId) {
+                    fireBtn.active = false;
+                    fireBtn.touchId = null;
+                    keys[' '] = false;
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchcancel', (e) => {
+            joystick.active = false;
+            joystick.touchId = null;
+            joystick.dx = 0;
+            joystick.dy = 0;
+            fireBtn.active = false;
+            fireBtn.touchId = null;
+            keys['ArrowLeft'] = false;
+            keys['ArrowRight'] = false;
+            keys['ArrowUp'] = false;
+            keys['ArrowDown'] = false;
+            keys[' '] = false;
+        });
+
+        function handleShopTouch(cx, cy) {
+            // Skott-köp
+            const ammoY = 105;
+            if (cx >= canvas.width / 2 - 120 && cx <= canvas.width / 2 + 120 && cy >= ammoY - 15 && cy <= ammoY + 15) {
+                buyAmmo();
+                return;
+            }
+            const leftX = 60;
+            const rightX = canvas.width / 2 + 20;
+            const startY = 140;
+            for (let i = 0; i < shipColors.length; i++) {
+                const y = startY + 28 + i * 32;
+                if (cx >= leftX - 10 && cx <= canvas.width / 2 && cy >= y - 18 && cy <= y + 10) {
+                    shopSelection = i;
+                    buyItem(shopItems[i]);
+                    return;
+                }
+            }
+            for (let i = 0; i < bulletUpgrades.length; i++) {
+                const y = startY + 28 + i * 52;
+                if (cx >= rightX - 10 && cx <= canvas.width && cy >= y - 18 && cy <= y + 28) {
+                    shopSelection = shipColors.length + i;
+                    buyItem(shopItems[shopSelection]);
+                    return;
+                }
+            }
+        }
+
+        function drawTouchControls() {
+            if (!isMobile || !gameRunning || shopOpen) return;
+
+            // Joystick-bas (vänster)
+            const jx = 100;
+            const jy = canvas.height - 90;
+
+            ctx.globalAlpha = 0.25;
+            ctx.beginPath();
+            ctx.arc(jx, jy, joystick.radius + 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.arc(jx + joystick.dx * 0.8, jy + joystick.dy * 0.8, 22, 0, Math.PI * 2);
+            ctx.fillStyle = '#00e5ff';
+            ctx.fill();
+
+            // Skjutknapp (höger)
+            const fx = canvas.width - 100;
+            const fy = canvas.height - 90;
+            ctx.globalAlpha = fireBtn.active ? 0.5 : 0.25;
+            ctx.beginPath();
+            ctx.arc(fx, fy, 40, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff4444';
+            ctx.fill();
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💥', fx, fy);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+
+            ctx.globalAlpha = 1;
         }
 
         // Startskärm
