@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Annies Husbyggare!</title>
+    <style>
+        * { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        h1 {
+            color: #ff77aa;
+            font-size: 1.6em;
+            margin: 8px 0 4px;
+            text-shadow: 0 0 15px rgba(255, 119, 170, 0.4);
+        }
+        canvas {
+            border: 3px solid #ff77aa;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255, 119, 170, 0.3);
+        }
+        #toolbar {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 720px;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            font-size: 1em;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+        .tab-btn:hover { transform: scale(1.05); }
+        .tab-btn.active { box-shadow: 0 0 12px rgba(255,255,255,0.4); transform: scale(1.08); }
+        #btn-mobler { background: #ff9933; color: #000; }
+        #btn-dekor { background: #33ccff; color: #000; }
+        #btn-vagar { background: #77dd77; color: #000; }
+        #btn-golv { background: #ddaa77; color: #000; }
+        #btn-radera { background: #ff4444; color: #fff; }
+        #hint {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 4px;
+            text-align: center;
+        }
+        @media (max-width: 750px) {
+            h1 { font-size: 1.2em; margin: 4px 0 2px; }
+            .tab-btn { padding: 6px 12px; font-size: 0.85em; }
+            canvas { max-width: 100vw; }
+            #hint { font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏠 Annies Husbyggare! 🏠</h1>
+    <canvas id="game" width="700" height="460"></canvas>
+    <div id="toolbar">
+        <button class="tab-btn active" id="btn-mobler" onclick="setTab('mobler')">🛋️ Möbler</button>
+        <button class="tab-btn" id="btn-dekor" onclick="setTab('dekor')">🖼️ Dekor</button>
+        <button class="tab-btn" id="btn-vagar" onclick="setTab('vagar')">🎨 Väggar</button>
+        <button class="tab-btn" id="btn-golv" onclick="setTab('golv')">🟫 Golv</button>
+        <button class="tab-btn" id="btn-radera" onclick="setTab('radera')">🗑️ Radera</button>
+    </div>
+    <div id="hint">Piltangenter = gå | Gå till en dörr för att byta rum | Klicka för att placera grejer!</div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+
+        const W = canvas.width;
+        const H = canvas.height;
+        const FLOOR_Y = H * 0.55; // golvet börjar här
+        const PAL_H = 55;         // palettens höjd
+
+        // === RUMMEN ===
+        // Dörrar: position på väggen, och vilket rum de leder till
+        const rooms = [
+            {
+                name: 'Vardagsrum', wallColor: '#ffe6cc', floorColor: '#c4956a',
+                items: [],
+                doors: [
+                    { wall: 'right', label: 'Kök →', toRoom: 1 },
+                    { wall: 'stairs', label: '↑ Sovrum', toRoom: 2 },
+                ]
+            },
+            {
+                name: 'Kök', wallColor: '#e6ffe6', floorColor: '#b5a67a',
+                items: [],
+                doors: [
+                    { wall: 'left', label: '← Vardagsrum', toRoom: 0 },
+                    { wall: 'stairs', label: '↑ Badrum', toRoom: 3 },
+                ]
+            },
+            {
+                name: 'Sovrum', wallColor: '#cce6ff', floorColor: '#c4956a',
+                items: [],
+                doors: [
+                    { wall: 'right', label: 'Badrum →', toRoom: 3 },
+                    { wall: 'stairs', label: '↓ Vardagsrum', toRoom: 0 },
+                ]
+            },
+            {
+                name: 'Badrum', wallColor: '#ffe6f0', floorColor: '#d9d9d9',
+                items: [],
+                doors: [
+                    { wall: 'left', label: '← Sovrum', toRoom: 2 },
+                    { wall: 'stairs', label: '↓ Kök', toRoom: 1 },
+                ]
+            },
+        ];
+
+        let currentRoom = 0;
+
+        // Dörr-rektanglar (beräknas i draw)
+        function getDoorRect(door) {
+            const dw = 60, dh = 80;
+            if (door.wall === 'left')   return { x: 5, y: FLOOR_Y - dh, w: dw, h: dh };
+            if (door.wall === 'right')  return { x: W - dw - 5, y: FLOOR_Y - dh, w: dw, h: dh };
+            if (door.wall === 'top')    return { x: W / 2 - dw / 2, y: 10, w: dw, h: dh };
+            if (door.wall === 'bottom') return { x: W / 2 - dw / 2, y: H - PAL_H - dh - 10, w: dw, h: dh };
+            if (door.wall === 'stairs') return { x: W / 2 - 45, y: FLOOR_Y - 100, w: 90, h: 120 };
+        }
+
+        // === KARAKTÄR ===
+        const player = {
+            x: W / 2,
+            y: FLOOR_Y + 40,
+            size: 50,
+            speed: 4,
+            icon: '🧑',
+            dir: 1,
+            bobble: 0
+        };
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
+        });
+        document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+        // === SAKER ===
+        const categories = {
+            mobler: [
+                { name: 'Soffa',      icon: '🛋️', w: 120, h: 100 },
+                { name: 'Stol',       icon: '🪑', w: 90, h: 90 },
+                { name: 'Bord',       icon: '🪵', w: 110, h: 90 },
+                { name: 'Säng',       icon: '🛏️', w: 120, h: 100 },
+                { name: 'Lampa',      icon: '💡', w: 80, h: 85 },
+                { name: 'TV',         icon: '📺', w: 110, h: 90 },
+                { name: 'Bokhylla',   icon: '📚', w: 100, h: 100 },
+                { name: 'Skrivbord',  icon: '🖥️', w: 110, h: 90 },
+                { name: 'Garderob',   icon: '🚪', w: 90, h: 100 },
+                { name: 'Byrå',       icon: '🗄️', w: 90, h: 90 },
+            ],
+            dekor: [
+                { name: 'Tavla',      icon: '🖼️', w: 85, h: 80 },
+                { name: 'Växt',       icon: '🪴', w: 80, h: 85 },
+                { name: 'Blomma',     icon: '🌸', w: 75, h: 75 },
+                { name: 'Ljus',       icon: '🕯️', w: 65, h: 75 },
+                { name: 'Klocka',     icon: '🕐', w: 75, h: 75 },
+                { name: 'Nalle',      icon: '🧸', w: 80, h: 80 },
+                { name: 'Matta',      icon: '🟤', w: 110, h: 60 },
+                { name: 'Spegel',     icon: '🪞', w: 70, h: 85 },
+                { name: 'Hjärta',     icon: '❤️', w: 75, h: 75 },
+                { name: 'Stjärna',    icon: '⭐', w: 75, h: 75 },
+            ],
+        };
+
+        const wallColors = [
+            { name: 'Persika',    color: '#ffe6cc' },
+            { name: 'Mint',       color: '#e6ffe6' },
+            { name: 'Himmelsblå', color: '#cce6ff' },
+            { name: 'Rosa',       color: '#ffe6f0' },
+            { name: 'Lavendel',   color: '#e6ccff' },
+            { name: 'Solsken',    color: '#ffffcc' },
+            { name: 'Korall',     color: '#ffcccc' },
+            { name: 'Vit',        color: '#ffffff' },
+            { name: 'Grå',        color: '#e0e0e0' },
+            { name: 'Mörkblå',    color: '#334466' },
+        ];
+
+        const floorColors = [
+            { name: 'Trä',        color: '#c4956a' },
+            { name: 'Mörkt trä',  color: '#8b6b4a' },
+            { name: 'Ljust trä',  color: '#deb887' },
+            { name: 'Sten',       color: '#b5a67a' },
+            { name: 'Kakel vit',  color: '#d9d9d9' },
+            { name: 'Kakel blå',  color: '#99bbcc' },
+            { name: 'Matta röd',  color: '#cc6666' },
+            { name: 'Matta blå',  color: '#6688aa' },
+            { name: 'Matta grön', color: '#77aa77' },
+            { name: 'Matta lila', color: '#9977aa' },
+        ];
+
+        // === STATE ===
+        let currentTab = 'mobler';
+        let selectedItem = null;
+        let dragging = null;
+        let dragOffX = 0, dragOffY = 0;
+        let paletteItems = [];
+        let selectedWallColor = null;
+        let selectedFloorColor = null;
+        let roomTransition = 0; // animation
+
+        function setTab(tab) {
+            currentTab = tab;
+            selectedItem = null;
+            selectedWallColor = null;
+            selectedFloorColor = null;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('btn-' + tab);
+            if (btn) btn.classList.add('active');
+        }
+
+        // === UPPDATERA ===
+        function updatePlayer() {
+            if (roomTransition > 0) { roomTransition--; return; }
+
+            let moving = false;
+            if (keys['ArrowUp'] || keys['w'] || keys['W'])    { player.y -= player.speed; moving = true; }
+            if (keys['ArrowDown'] || keys['s'] || keys['S'])  { player.y += player.speed; moving = true; }
+            if (keys['ArrowLeft'] || keys['a'] || keys['A'])  { player.x -= player.speed; player.dir = -1; moving = true; }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.x += player.speed; player.dir = 1; moving = true; }
+
+            // Begränsa till rummet
+            player.x = Math.max(30, Math.min(W - 30, player.x));
+            player.y = Math.max(30, Math.min(H - PAL_H - 30, player.y));
+
+            if (moving) player.bobble += 0.3;
+
+            if (doorCooldown > 0) { doorCooldown--; return; }
+
+            // Kolla om spelaren går in i en dörr
+            const room = rooms[currentRoom];
+            for (const door of room.doors) {
+                const dr = getDoorRect(door);
+                if (player.x > dr.x && player.x < dr.x + dr.w &&
+                    player.y > dr.y && player.y < dr.y + dr.h) {
+                    enterRoom(door);
+                    break;
+                }
+            }
+        }
+
+        let doorCooldown = 0;
+
+        function enterRoom(door) {
+            currentRoom = door.toRoom;
+            roomTransition = 15;
+            doorCooldown = 30;
+
+            // Placera spelaren i mitten men mot rätt sida
+            if (door.wall === 'left')   { player.x = W - 100; player.y = FLOOR_Y + 40; }
+            if (door.wall === 'right')  { player.x = 100; player.y = FLOOR_Y + 40; }
+            if (door.wall === 'top')    { player.x = W / 2; player.y = FLOOR_Y + 40; }
+            if (door.wall === 'bottom') { player.x = W / 2; player.y = FLOOR_Y - 60; }
+            if (door.wall === 'stairs') { player.x = W / 2 + 80; player.y = FLOOR_Y + 40; }
+        }
+
+        // === RITA ===
+        function draw() {
+            const room = rooms[currentRoom];
+
+            // Vägg
+            ctx.fillStyle = room.wallColor;
+            ctx.fillRect(0, 0, W, H);
+
+            // Golv
+            ctx.fillStyle = room.floorColor;
+            ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+            // Golvlinje
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, FLOOR_Y);
+            ctx.lineTo(W, FLOOR_Y);
+            ctx.stroke();
+
+            // Väggkant / list
+            ctx.fillStyle = 'rgba(0,0,0,0.06)';
+            ctx.fillRect(0, FLOOR_Y - 8, W, 8);
+
+            // Rumsnamn
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(room.name, W / 2, 15);
+
+            // Rita dörrar
+            for (const door of room.doors) {
+                drawDoor(door);
+            }
+
+            // Rita placerade saker i detta rum
+            for (const item of room.items) {
+                drawPlacedItem(item);
+            }
+
+            // Rita spelaren
+            drawPlayer();
+
+            // Rita paletten
+            drawPalette();
+
+            // Transition-effekt
+            if (roomTransition > 0) {
+                ctx.fillStyle = `rgba(0,0,0,${roomTransition / 15 * 0.5})`;
+                ctx.fillRect(0, 0, W, H);
+            }
+        }
+
+        function drawDoor(door) {
+            const dr = getDoorRect(door);
+
+            if (door.wall === 'stairs') {
+                drawStairs(dr, door.label);
+                return;
+            }
+
+            // Dörrram
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(dr.x - 3, dr.y - 3, dr.w + 6, dr.h + 6);
+
+            // Dörren
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(dr.x, dr.y, dr.w, dr.h);
+
+            // Dörrhandtag
+            ctx.beginPath();
+            ctx.arc(dr.x + dr.w - 14, dr.y + dr.h / 2, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 13px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(door.label, dr.x + dr.w / 2, dr.y + dr.h + 14);
+            ctx.shadowBlur = 0;
+        }
+
+        function drawStairs(dr, label) {
+            // Trappbakgrund
+            ctx.fillStyle = '#8B6B4a';
+            ctx.fillRect(dr.x, dr.y, dr.w, dr.h);
+
+            // Trappsteg
+            const steps = 6;
+            const stepH = dr.h / steps;
+            for (let i = 0; i < steps; i++) {
+                const sy = dr.y + i * stepH;
+                ctx.fillStyle = i % 2 === 0 ? '#c4956a' : '#b5876a';
+                ctx.fillRect(dr.x, sy, dr.w, stepH - 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                ctx.fillRect(dr.x, sy + stepH - 4, dr.w, 4);
+            }
+
+            // Räcke vänster
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(dr.x, dr.y + dr.h);
+            ctx.lineTo(dr.x, dr.y);
+            ctx.stroke();
+
+            // Räcke höger
+            ctx.beginPath();
+            ctx.moveTo(dr.x + dr.w, dr.y + dr.h);
+            ctx.lineTo(dr.x + dr.w, dr.y);
+            ctx.stroke();
+
+            // Dörr överst på trappan
+            const doorW = 50, doorH = 60;
+            const doorX = dr.x + dr.w / 2 - doorW / 2;
+            const doorY = dr.y + 5;
+
+            // Dörrram
+            ctx.fillStyle = '#6B3310';
+            ctx.fillRect(doorX - 3, doorY - 3, doorW + 6, doorH + 6);
+
+            // Dörren
+            ctx.fillStyle = '#D2691E';
+            ctx.fillRect(doorX, doorY, doorW, doorH);
+
+            // Dörrhandtag
+            ctx.beginPath();
+            ctx.arc(doorX + doorW - 12, doorY + doorH / 2, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+
+            // Ram runt hela trappan
+            ctx.strokeStyle = '#664433';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(dr.x, dr.y, dr.w, dr.h);
+
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.7)';
+            ctx.shadowBlur = 4;
+            ctx.fillText(label, dr.x + dr.w / 2, dr.y + dr.h + 16);
+            ctx.shadowBlur = 0;
+        }
+
+        function drawPlacedItem(item) {
+            const fontSize = Math.max(item.w, item.h);
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 6;
+            ctx.fillText(item.icon, item.x + item.w / 2, item.y + item.h / 2);
+            ctx.shadowBlur = 0;
+
+            if (currentTab === 'radera') {
+                ctx.strokeStyle = 'rgba(255,0,0,0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(item.x - 2, item.y - 2, item.w + 4, item.h + 4);
+                ctx.setLineDash([]);
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            const bob = Math.sin(player.bobble) * 3;
+            const px = player.x;
+            const py = player.y + bob;
+
+            // Skugga
+            ctx.beginPath();
+            ctx.ellipse(px, player.y + player.size / 2 + 5, 16, 5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fill();
+
+            // Karaktär
+            ctx.font = `${player.size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            if (player.dir === -1) {
+                ctx.scale(-1, 1);
+                ctx.fillText(player.icon, -px, py);
+            } else {
+                ctx.fillText(player.icon, px, py);
+            }
+            ctx.restore();
+        }
+
+        function drawPalette() {
+            const palY = H - PAL_H;
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(0, palY, W, PAL_H);
+
+            paletteItems = [];
+
+            if (currentTab === 'mobler' || currentTab === 'dekor') {
+                const items = categories[currentTab];
+                const totalW = items.length * 62;
+                const startX = Math.max(5, (W - totalW) / 2);
+
+                items.forEach((item, i) => {
+                    const ix = startX + i * 62;
+                    const iy = palY + 5;
+                    const iw = 56;
+                    const ih = 45;
+
+                    const isSelected = selectedItem && selectedItem.name === item.name;
+                    if (isSelected) {
+                        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                        ctx.fillRect(ix - 2, iy - 2, iw + 4, ih + 4);
+                        ctx.strokeStyle = '#ff77aa';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(ix - 2, iy - 2, iw + 4, ih + 4);
+                    }
+
+                    ctx.font = '26px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(item.icon, ix + iw / 2, iy + 16);
+
+                    ctx.fillStyle = '#ccc';
+                    ctx.font = '9px Arial';
+                    ctx.fillText(item.name, ix + iw / 2, iy + 38);
+
+                    paletteItems.push({ x: ix, y: iy, w: iw, h: ih, item });
+                });
+            } else if (currentTab === 'vagar') {
+                const totalW = wallColors.length * 62;
+                const startX = Math.max(5, (W - totalW) / 2);
+                wallColors.forEach((c, i) => {
+                    const ix = startX + i * 62;
+                    const iy = palY + 5;
+                    const iw = 56, ih = 45;
+                    ctx.fillStyle = c.color;
+                    ctx.fillRect(ix + 8, iy + 2, 40, 24);
+                    ctx.strokeStyle = selectedWallColor === c.color ? '#ff77aa' : '#666';
+                    ctx.lineWidth = selectedWallColor === c.color ? 3 : 1;
+                    ctx.strokeRect(ix + 8, iy + 2, 40, 24);
+                    ctx.fillStyle = '#ccc';
+                    ctx.font = '9px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(c.name, ix + iw / 2, iy + 40);
+                    paletteItems.push({ x: ix, y: iy, w: iw, h: ih, wallColor: c.color });
+                });
+            } else if (currentTab === 'golv') {
+                const totalW = floorColors.length * 62;
+                const startX = Math.max(5, (W - totalW) / 2);
+                floorColors.forEach((c, i) => {
+                    const ix = startX + i * 62;
+                    const iy = palY + 5;
+                    const iw = 56, ih = 45;
+                    ctx.fillStyle = c.color;
+                    ctx.fillRect(ix + 8, iy + 2, 40, 24);
+                    ctx.strokeStyle = selectedFloorColor === c.color ? '#ff77aa' : '#666';
+                    ctx.lineWidth = selectedFloorColor === c.color ? 3 : 1;
+                    ctx.strokeRect(ix + 8, iy + 2, 40, 24);
+                    ctx.fillStyle = '#ccc';
+                    ctx.font = '9px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(c.name, ix + iw / 2, iy + 40);
+                    paletteItems.push({ x: ix, y: iy, w: iw, h: ih, floorColor: c.color });
+                });
+            } else if (currentTab === 'radera') {
+                ctx.fillStyle = '#ff6666';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🗑️ Klicka på en sak för att ta bort den!', W / 2, palY + 27);
+            }
+        }
+
+        // === KLICK-HANTERING ===
+        function getCanvasPos(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (clientX - rect.left) * (W / rect.width),
+                y: (clientY - rect.top) * (H / rect.height)
+            };
+        }
+
+        function getPaletteItemAt(x, y) {
+            for (const p of paletteItems) {
+                if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) return p;
+            }
+            return null;
+        }
+
+        function getPlacedItemAt(x, y) {
+            const items = rooms[currentRoom].items;
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                if (x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h) {
+                    return { item, index: i };
+                }
+            }
+            return null;
+        }
+
+        function handleDown(cx, cy) {
+            // Palett
+            const pal = getPaletteItemAt(cx, cy);
+            if (pal) {
+                if (pal.item) { selectedItem = pal.item; selectedWallColor = null; selectedFloorColor = null; }
+                else if (pal.wallColor) { selectedWallColor = pal.wallColor; selectedItem = null; selectedFloorColor = null; }
+                else if (pal.floorColor) { selectedFloorColor = pal.floorColor; selectedItem = null; selectedWallColor = null; }
+                return;
+            }
+
+            const room = rooms[currentRoom];
+
+            // Radera
+            if (currentTab === 'radera') {
+                const found = getPlacedItemAt(cx, cy);
+                if (found) room.items.splice(found.index, 1);
+                return;
+            }
+
+            // Väggfärg
+            if (selectedWallColor) {
+                room.wallColor = selectedWallColor;
+                return;
+            }
+
+            // Golvfärg
+            if (selectedFloorColor) {
+                room.floorColor = selectedFloorColor;
+                return;
+            }
+
+            // Dra befintlig sak
+            const found = getPlacedItemAt(cx, cy);
+            if (found) {
+                dragging = found.item;
+                dragOffX = cx - found.item.x;
+                dragOffY = cy - found.item.y;
+                room.items.splice(found.index, 1);
+                room.items.push(dragging);
+                return;
+            }
+
+            // Placera ny sak
+            if (selectedItem && cy < H - PAL_H) {
+                room.items.push({
+                    icon: selectedItem.icon,
+                    name: selectedItem.name,
+                    x: cx - selectedItem.w / 2,
+                    y: cy - selectedItem.h / 2,
+                    w: selectedItem.w,
+                    h: selectedItem.h
+                });
+            }
+        }
+
+        function handleMove(cx, cy) {
+            if (dragging) {
+                dragging.x = cx - dragOffX;
+                dragging.y = cy - dragOffY;
+            }
+        }
+
+        function handleUp() {
+            dragging = null;
+        }
+
+        // === MUS ===
+        canvas.addEventListener('mousedown', (e) => { handleDown(...Object.values(getCanvasPos(e.clientX, e.clientY))); });
+        canvas.addEventListener('mousemove', (e) => { handleMove(...Object.values(getCanvasPos(e.clientX, e.clientY))); });
+        canvas.addEventListener('mouseup', () => handleUp());
+
+        // === TOUCH ===
+        let playerTouch = { active: false, touchId: null, startX: 0, startY: 0, dx: 0, dy: 0 };
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                const pos = getCanvasPos(t.clientX, t.clientY);
+
+                // Nedre vänstra = joystick för att gå
+                if (pos.x < 140 && pos.y > H - PAL_H - 120 && pos.y < H - PAL_H) {
+                    playerTouch.active = true;
+                    playerTouch.touchId = t.identifier;
+                    playerTouch.startX = pos.x;
+                    playerTouch.startY = pos.y;
+                    playerTouch.dx = 0;
+                    playerTouch.dy = 0;
+                    return;
+                }
+
+                handleDown(pos.x, pos.y);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                if (t.identifier === playerTouch.touchId && playerTouch.active) {
+                    const pos = getCanvasPos(t.clientX, t.clientY);
+                    playerTouch.dx = pos.x - playerTouch.startX;
+                    playerTouch.dy = pos.y - playerTouch.startY;
+                    const dist = Math.sqrt(playerTouch.dx ** 2 + playerTouch.dy ** 2);
+                    if (dist > 40) {
+                        playerTouch.dx = (playerTouch.dx / dist) * 40;
+                        playerTouch.dy = (playerTouch.dy / dist) * 40;
+                    }
+                    keys['ArrowLeft'] = playerTouch.dx < -8;
+                    keys['ArrowRight'] = playerTouch.dx > 8;
+                    keys['ArrowUp'] = playerTouch.dy < -8;
+                    keys['ArrowDown'] = playerTouch.dy > 8;
+                    return;
+                }
+                const pos = getCanvasPos(t.clientX, t.clientY);
+                handleMove(pos.x, pos.y);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (const t of e.changedTouches) {
+                if (t.identifier === playerTouch.touchId) {
+                    playerTouch.active = false;
+                    playerTouch.touchId = null;
+                    keys['ArrowLeft'] = false;
+                    keys['ArrowRight'] = false;
+                    keys['ArrowUp'] = false;
+                    keys['ArrowDown'] = false;
+                    return;
+                }
+            }
+            handleUp();
+        }, { passive: false });
+
+        // === GAME LOOP ===
+        function gameLoop() {
+            updatePlayer();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+</body>
+</html>
