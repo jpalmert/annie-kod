@@ -359,8 +359,8 @@
                         return;
                     }
                 }
-                if (door.wall === 'stairsDown') {
-                    // Gå på luckan = byt rum direkt
+                if (door.wall === 'stairsDown' && !inStairs) {
+                    // Gå på luckan = byt rum direkt (men inte om man är i trappa upp)
                     if (player.x > W / 2 - HOLE_W / 2 && player.x < W / 2 + HOLE_W / 2) {
                         enterRoom(door);
                         return;
@@ -388,8 +388,8 @@
             if (door.wall === 'left')       { player.x = W - 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'right')      { player.x = 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'stairsUp') {
-                // Gick upp → hamna vid hålet i golvet i rummet ovanför
-                player.x = W / 2;
+                // Gick upp → hamna bredvid luckan i rummet ovanför
+                player.x = W / 2 + HOLE_W / 2 + 30;
                 player.y = FLOOR_Y + 10;
             }
             if (door.wall === 'stairsDown') {
