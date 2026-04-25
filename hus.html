@@ -235,14 +235,38 @@
             if (roomTransition > 0) { roomTransition--; return; }
 
             let moving = false;
-            if (keys['ArrowUp'] || keys['w'] || keys['W'])    { player.y -= player.speed; moving = true; }
-            if (keys['ArrowDown'] || keys['s'] || keys['S'])  { player.y += player.speed; moving = true; }
-            if (keys['ArrowLeft'] || keys['a'] || keys['A'])  { player.x -= player.speed; player.dir = -1; moving = true; }
-            if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.x += player.speed; player.dir = 1; moving = true; }
+            let newX = player.x;
+            let newY = player.y;
+            if (keys['ArrowUp'] || keys['w'] || keys['W'])    { newY -= player.speed; moving = true; }
+            if (keys['ArrowDown'] || keys['s'] || keys['S'])  { newY += player.speed; moving = true; }
+            if (keys['ArrowLeft'] || keys['a'] || keys['A'])  { newX -= player.speed; player.dir = -1; moving = true; }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) { newX += player.speed; player.dir = 1; moving = true; }
 
-            // Begränsa till rummet
-            player.x = Math.max(30, Math.min(W - 30, player.x));
-            player.y = Math.max(30, Math.min(H - PAL_H - 30, player.y));
+            // Vänster/höger begränsas alltid till skärmen
+            newX = Math.max(30, Math.min(W - 30, newX));
+
+            // Kolla om spelaren är i en trappa
+            const room = rooms[currentRoom];
+            let inStairs = false;
+            for (const door of room.doors) {
+                if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
+                    const dr = getDoorRect(door);
+                    if (newX > dr.x + 5 && newX < dr.x + dr.w - 5) {
+                        inStairs = true;
+                        // I trappan får man gå upp och ner fritt
+                        newY = Math.max(0, Math.min(H - PAL_H - 10, newY));
+                        break;
+                    }
+                }
+            }
+
+            if (!inStairs) {
+                // Utanför trappan: bara golvet (mellan FLOOR_Y och paletten)
+                newY = Math.max(FLOOR_Y + 10, Math.min(H - PAL_H - 30, newY));
+            }
+
+            player.x = newX;
+            player.y = newY;
 
             if (moving) player.bobble += 0.3;
 
