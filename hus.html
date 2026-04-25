@@ -131,8 +131,8 @@
         // Trappan går snett: botten till höger vid golvet, toppen uppe till vänster
         // stairsUp: botten vid golvet höger, toppen försvinner uppåt vänster
         // stairsDown: toppen vid golvet vänster, botten försvinner nedåt höger
-        const HOLE_W = 95; // bredden på hålet i golvet
-        const HOLE_H = 95; // höjden på hålet
+        const HOLE_W = 75; // bredden på hålet i golvet
+        const HOLE_H = 75; // höjden på hålet
 
         function getStairPath(door) {
             if (door.wall === 'stairsUp') {
@@ -594,7 +594,7 @@
             ctx.rect(hx, hy, HOLE_W, HOLE_H);
             ctx.clip();
 
-            const steps = 6;
+            const steps = 4;
             const stepW = HOLE_W / steps;
             const bottom = hy + HOLE_H; // nederkant av luckan
 
