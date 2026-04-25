@@ -362,8 +362,9 @@
                     }
                 }
                 if (door.wall === 'stairsDown' && !inStairs) {
-                    // Gå på luckan = byt rum direkt (men inte om man är i trappa upp)
-                    if (player.x > W / 2 - HOLE_W / 2 && player.x < W / 2 + HOLE_W / 2) {
+                    // Bara trigga om fötterna är på luckan (nära golvnivå OCH inom bredden)
+                    if (player.x > W / 2 - HOLE_W / 2 && player.x < W / 2 + HOLE_W / 2 &&
+                        player.y >= FLOOR_Y - 5 && player.y <= FLOOR_Y + 30) {
                         enterRoom(door);
                         return;
                     }
@@ -395,9 +396,18 @@
                 player.y = FLOOR_Y + 10;
             }
             if (door.wall === 'stairsDown') {
-                // Gick ner → hamna vid botten av trappa upp i rummet under (på golvet)
-                player.x = W / 2 + STAIR_W / 2 + 30;
-                player.y = FLOOR_Y + 10;
+                // Gick ner → hamna högst upp i trappan i rummet under
+                const newRoom = rooms[door.toRoom];
+                const upDoor = newRoom.doors.find(d => d.wall === 'stairsUp');
+                if (upDoor) {
+                    const sp = getStairPath(upDoor);
+                    // Nära toppen av trappan
+                    player.x = sp.topX + 30;
+                    player.y = getStairY(upDoor, sp.topX + 30);
+                } else {
+                    player.x = W / 2;
+                    player.y = FLOOR_Y + 10;
+                }
             }
         }
 
