@@ -360,8 +360,8 @@
                     }
                 }
                 if (door.wall === 'stairsDown') {
-                    // Gå på hålet = byt rum direkt
-                    if (isOnStairs(door, player.x, player.y)) {
+                    // Gå på luckan = byt rum direkt
+                    if (player.x > W / 2 - HOLE_W / 2 && player.x < W / 2 + HOLE_W / 2) {
                         enterRoom(door);
                         return;
                     }
