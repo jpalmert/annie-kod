@@ -600,8 +600,8 @@
             const offsetPerStep = 12;
 
             for (let i = 0; i < steps; i++) {
-                const sx = hx + HOLE_W - (i + 1) * stepW;
-                const sy = hy + 4 + i * offsetPerStep;
+                const sx = hx + i * stepW;
+                const sy = hy + HOLE_H - stepH - 4 - i * offsetPerStep;
                 const shade = (steps - i) / steps;
                 const r = Math.floor(170 * shade + 30);
                 const g = Math.floor(130 * shade + 20);
