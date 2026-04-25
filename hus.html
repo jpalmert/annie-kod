@@ -596,12 +596,13 @@
 
             const steps = 6;
             const stepW = HOLE_W / steps;
-            const stepH = HOLE_H - 8;
-            const offsetPerStep = 12;
+            const bottom = hy + HOLE_H; // nederkant av luckan
 
             for (let i = 0; i < steps; i++) {
                 const sx = hx + i * stepW;
-                const sy = hy + HOLE_H - stepH - 4 - i * offsetPerStep;
+                // Första steget (vänster) är högst, varje steg blir kortare
+                const stepH = HOLE_H - i * (HOLE_H / (steps + 1));
+                const sy = bottom - stepH;
                 const shade = (steps - i) / steps;
                 const r = Math.floor(170 * shade + 30);
                 const g = Math.floor(130 * shade + 20);
