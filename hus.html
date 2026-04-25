@@ -169,9 +169,9 @@
                 const expectedY = getStairY(door, px);
                 return Math.abs(py - expectedY) < 40;
             } else {
-                // Hål i golvet: spelaren är i hålet om den är inom bredden och under golvet
-                if (px < W / 2 - HOLE_W / 2 - 10 || px > W / 2 + HOLE_W / 2 + 10) return false;
-                return py >= FLOOR_Y - 10;
+                // Hål i golvet: man är på det om man står ovanpå det
+                if (px < W / 2 - HOLE_W / 2 || px > W / 2 + HOLE_W / 2) return false;
+                return py >= FLOOR_Y - 5 && py <= FLOOR_Y + 30;
             }
         }
 
@@ -184,7 +184,7 @@
                 return { x: sp.topX, y: sp.topY, w: sp.bottomX - sp.topX, h: sp.bottomY - sp.topY };
             }
             if (door.wall === 'stairsDown') {
-                return { x: W / 2 - HOLE_W / 2, y: FLOOR_Y, w: HOLE_W, h: H - FLOOR_Y - PAL_H };
+                return { x: W / 2 - HOLE_W / 2, y: FLOOR_Y, w: HOLE_W, h: 25 };
             }
         }
 
@@ -319,18 +319,6 @@
                     newY = FLOOR_Y + 10;
                     inStairs = false;
                 }
-            } else if (inStairs && stairDoor.wall === 'stairsDown') {
-                // Trappa ner (hål i golvet): upp = uppåt, ner = nedåt, rakt
-                if (goUp)    { newY -= player.speed; moving = true; }
-                if (goDown)  { newY += player.speed; moving = true; }
-                if (goLeft)  { newX -= player.speed; player.dir = -1; moving = true; }
-                if (goRight) { newX += player.speed; player.dir = 1; moving = true; }
-                newX = Math.max(W / 2 - HOLE_W / 2, Math.min(W / 2 + HOLE_W / 2, newX));
-                newY = Math.max(FLOOR_Y, Math.min(H - PAL_H - 10, newY));
-                if (!isOnStairs(stairDoor, newX, newY)) {
-                    newY = FLOOR_Y + 10;
-                    inStairs = false;
-                }
             } else {
                 // På golvet: vanlig rörelse
                 if (goUp)    { newY -= player.speed; moving = true; }
@@ -370,9 +358,9 @@
                         return;
                     }
                 }
-                if (door.wall === 'stairsDown' && inStairs) {
-                    // Gick ner genom golvet (nådde botten)
-                    if (player.y >= H - PAL_H - 15) {
+                if (door.wall === 'stairsDown') {
+                    // Gå på hålet = byt rum direkt
+                    if (isOnStairs(door, player.x, player.y)) {
                         enterRoom(door);
                         return;
                     }
@@ -399,14 +387,15 @@
             if (door.wall === 'left')       { player.x = W - 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'right')      { player.x = 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'stairsUp') {
-                // Gick upp → hamna vid hålet i golvet i nya rummet
+                // Gick upp → hamna vid hålet i golvet i rummet ovanför
                 player.x = W / 2;
                 player.y = FLOOR_Y + 10;
             }
             if (door.wall === 'stairsDown') {
-                // Gick ner → hamna vid botten av trappa upp i nya rummet
-                player.x = W / 2 + STAIR_W / 2;
-                player.y = FLOOR_Y;
+                // Gick ner → hamna överst på trappa upp i rummet under
+                const sp = getStairPath({ wall: 'stairsUp' });
+                player.x = sp.topX + 20;
+                player.y = getStairY({ wall: 'stairsUp' }, sp.topX + 20);
             }
         }
 
@@ -581,29 +570,21 @@
         function drawStairsDown(dr, door) {
             const hx = W / 2 - HOLE_W / 2;
             const hy = FLOOR_Y;
-            const hh = H - FLOOR_Y - PAL_H;
-            const steps = 6;
-            const stepH = hh / steps;
+            const hh = 25; // bara lite synligt
 
             // Mörkt hål i golvet
             ctx.fillStyle = '#1a1008';
             ctx.fillRect(hx, hy, HOLE_W, hh);
 
-            // Trappsteg som går rakt ner
-            for (let i = 0; i < steps; i++) {
-                const sy = hy + i * stepH;
-                const shade = (steps - i) / steps;
-                const r = Math.floor(160 * shade + 30);
-                const g = Math.floor(120 * shade + 20);
-                const b = Math.floor(80 * shade + 15);
-                ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(hx + 3, sy + stepH - 6, HOLE_W - 6, 6);
-                // Skugga
-                ctx.fillStyle = `rgba(0,0,0,${0.2 * shade})`;
-                ctx.fillRect(hx + 3, sy + stepH - 6, HOLE_W - 6, 2);
-            }
+            // Två-tre trappsteg som försvinner ner
+            ctx.fillStyle = '#a08060';
+            ctx.fillRect(hx + 3, hy + 4, HOLE_W - 6, 4);
+            ctx.fillStyle = '#887050';
+            ctx.fillRect(hx + 3, hy + 12, HOLE_W - 6, 4);
+            ctx.fillStyle = '#604830';
+            ctx.fillRect(hx + 3, hy + 20, HOLE_W - 6, 4);
 
-            // Kant/ram runt hålet
+            // Kant runt hålet
             ctx.strokeStyle = '#664433';
             ctx.lineWidth = 3;
             ctx.strokeRect(hx, hy, HOLE_W, hh);
@@ -615,7 +596,7 @@
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.7)';
             ctx.shadowBlur = 4;
-            ctx.fillText(door.label, W / 2, hy + 20);
+            ctx.fillText(door.label, W / 2, hy + hh + 16);
             ctx.shadowBlur = 0;
         }
 
