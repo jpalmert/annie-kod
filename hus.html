@@ -545,95 +545,227 @@
             ctx.save();
             const px = player.x;
             const py = player.y;
-            const swing = Math.sin(player.bobble) * 0.4; // arm/ben-sving
+            const swing = Math.sin(player.bobble) * 0.5;
+            const bounce = Math.abs(Math.sin(player.bobble)) * 2;
 
-            ctx.translate(px, py);
+            ctx.translate(px, py - bounce);
             if (player.dir === -1) ctx.scale(-1, 1);
 
             // Skugga
             ctx.beginPath();
-            ctx.ellipse(0, 28, 14, 4, 0, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.ellipse(0, 30 + bounce, 16, 5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.18)';
             ctx.fill();
 
+            // === BEN ===
             // Vänster ben
             ctx.save();
-            ctx.translate(-6, 12);
+            ctx.translate(-6, 14);
             ctx.rotate(swing);
-            ctx.fillStyle = '#3355aa';
-            ctx.fillRect(-4, 0, 8, 18);
+            // Byxa
+            const legGrad = ctx.createLinearGradient(0, 0, 0, 18);
+            legGrad.addColorStop(0, '#3b5fc0');
+            legGrad.addColorStop(1, '#2d4a99');
+            ctx.fillStyle = legGrad;
+            ctx.beginPath();
+            ctx.roundRect(-5, 0, 10, 18, 2);
+            ctx.fill();
             // Sko
-            ctx.fillStyle = '#333';
-            ctx.fillRect(-4, 16, 10, 5);
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            ctx.roundRect(-4, 16, 12, 6, [0, 3, 3, 0]);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-2, 17, 8, 1.5);
             ctx.restore();
 
             // Höger ben
             ctx.save();
-            ctx.translate(6, 12);
+            ctx.translate(6, 14);
             ctx.rotate(-swing);
-            ctx.fillStyle = '#3355aa';
-            ctx.fillRect(-4, 0, 8, 18);
-            // Sko
-            ctx.fillStyle = '#333';
-            ctx.fillRect(-4, 16, 10, 5);
+            ctx.fillStyle = legGrad;
+            ctx.beginPath();
+            ctx.roundRect(-5, 0, 10, 18, 2);
+            ctx.fill();
+            ctx.fillStyle = '#444';
+            ctx.beginPath();
+            ctx.roundRect(-4, 16, 12, 6, [0, 3, 3, 0]);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-2, 17, 8, 1.5);
             ctx.restore();
 
-            // Kropp
-            ctx.fillStyle = '#ff5577';
+            // === KROPP ===
+            const bodyGrad = ctx.createLinearGradient(0, -10, 0, 16);
+            bodyGrad.addColorStop(0, '#ff6b8a');
+            bodyGrad.addColorStop(1, '#e8456a');
+            ctx.fillStyle = bodyGrad;
             ctx.beginPath();
-            ctx.roundRect(-10, -8, 20, 22, 4);
+            ctx.roundRect(-12, -10, 24, 26, 5);
             ctx.fill();
 
+            // Krage
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.moveTo(-6, -10);
+            ctx.lineTo(0, -4);
+            ctx.lineTo(6, -10);
+            ctx.closePath();
+            ctx.fill();
+
+            // Knapp
+            ctx.fillStyle = '#cc3355';
+            ctx.beginPath();
+            ctx.arc(0, 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // === ARMAR ===
             // Vänster arm
             ctx.save();
-            ctx.translate(-10, -4);
-            ctx.rotate(-swing);
-            ctx.fillStyle = '#ffcc99';
-            ctx.fillRect(-4, 0, 6, 16);
+            ctx.translate(-12, -5);
+            ctx.rotate(-swing * 0.8);
+            // Ärm
+            ctx.fillStyle = '#ff6b8a';
+            ctx.beginPath();
+            ctx.roundRect(-4, 0, 8, 10, 2);
+            ctx.fill();
+            // Underarm/hand (hud)
+            ctx.fillStyle = '#ffddaa';
+            ctx.beginPath();
+            ctx.roundRect(-3, 10, 7, 8, 2);
+            ctx.fill();
             // Hand
             ctx.beginPath();
-            ctx.arc(-1, 16, 4, 0, Math.PI * 2);
+            ctx.arc(0, 19, 4, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
             // Höger arm
             ctx.save();
-            ctx.translate(10, -4);
-            ctx.rotate(swing);
-            ctx.fillStyle = '#ffcc99';
-            ctx.fillRect(-2, 0, 6, 16);
-            // Hand
+            ctx.translate(12, -5);
+            ctx.rotate(swing * 0.8);
+            ctx.fillStyle = '#ff6b8a';
             ctx.beginPath();
-            ctx.arc(1, 16, 4, 0, Math.PI * 2);
+            ctx.roundRect(-4, 0, 8, 10, 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffddaa';
+            ctx.beginPath();
+            ctx.roundRect(-3, 10, 7, 8, 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(1, 19, 4, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
 
+            // === HUVUD ===
+            // Hals
+            ctx.fillStyle = '#ffddaa';
+            ctx.fillRect(-4, -14, 8, 6);
+
             // Huvud
+            const headGrad = ctx.createRadialGradient(-3, -24, 2, 0, -22, 15);
+            headGrad.addColorStop(0, '#ffe8c8');
+            headGrad.addColorStop(1, '#ffcc99');
+            ctx.fillStyle = headGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, -22, 14, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Öron
             ctx.fillStyle = '#ffcc99';
             ctx.beginPath();
-            ctx.arc(0, -18, 13, 0, Math.PI * 2);
+            ctx.ellipse(-13, -20, 4, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(13, -20, 4, 5, 0, 0, Math.PI * 2);
             ctx.fill();
 
             // Hår
-            ctx.fillStyle = '#553300';
+            ctx.fillStyle = '#6B3FA0';
             ctx.beginPath();
-            ctx.arc(0, -22, 13, Math.PI, 2 * Math.PI);
+            ctx.ellipse(0, -28, 15, 10, 0, Math.PI, 2 * Math.PI);
             ctx.fill();
-            ctx.fillRect(-13, -23, 26, 5);
+            // Lugg
+            ctx.beginPath();
+            ctx.ellipse(-5, -33, 8, 5, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(4, -32, 6, 4, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            // Hår på sidorna
+            ctx.beginPath();
+            ctx.ellipse(-12, -24, 5, 8, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(12, -24, 5, 8, -0.2, 0, Math.PI * 2);
+            ctx.fill();
 
             // Ögon
-            ctx.fillStyle = '#000';
+            // Vita
+            ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.arc(-5, -19, 2, 0, Math.PI * 2);
-            ctx.arc(5, -19, 2, 0, Math.PI * 2);
+            ctx.ellipse(-5, -22, 5, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(5, -22, 5, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Iris
+            ctx.fillStyle = '#5588cc';
+            ctx.beginPath();
+            ctx.arc(-4, -22, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(6, -22, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupill
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(-4, -22, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(6, -22, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            // Ögonglans
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(-3, -23, 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(7, -23, 0.8, 0, Math.PI * 2);
             ctx.fill();
 
-            // Leende
-            ctx.strokeStyle = '#cc4455';
+            // Ögonbryn
+            ctx.strokeStyle = '#5a2d82';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.arc(0, -15, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.arc(-5, -26, 5, 1.1 * Math.PI, 1.9 * Math.PI);
             ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(5, -26, 5, 1.1 * Math.PI, 1.9 * Math.PI);
+            ctx.stroke();
+
+            // Näsa
+            ctx.fillStyle = '#eebb88';
+            ctx.beginPath();
+            ctx.ellipse(1, -18, 2, 2.5, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mun / leende
+            ctx.strokeStyle = '#cc4466';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(1, -14, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.stroke();
+
+            // Kinder (rouge)
+            ctx.fillStyle = 'rgba(255, 120, 140, 0.25)';
+            ctx.beginPath();
+            ctx.ellipse(-9, -17, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(9, -17, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
 
             ctx.restore();
         }
