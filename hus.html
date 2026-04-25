@@ -132,6 +132,7 @@
         // stairsUp: botten vid golvet höger, toppen försvinner uppåt vänster
         // stairsDown: toppen vid golvet vänster, botten försvinner nedåt höger
         const HOLE_W = 80; // bredden på hålet i golvet
+        const HOLE_H = 80; // höjden på hålet
 
         function getStairPath(door) {
             if (door.wall === 'stairsUp') {
@@ -171,7 +172,7 @@
             } else {
                 // Hål i golvet: man är på det om man står ovanpå det
                 if (px < W / 2 - HOLE_W / 2 || px > W / 2 + HOLE_W / 2) return false;
-                return py >= FLOOR_Y - 5 && py <= FLOOR_Y + 30;
+                return py >= FLOOR_Y - 5 && py <= FLOOR_Y + HOLE_H;
             }
         }
 
@@ -184,7 +185,7 @@
                 return { x: sp.topX, y: sp.topY, w: sp.bottomX - sp.topX, h: sp.bottomY - sp.topY };
             }
             if (door.wall === 'stairsDown') {
-                return { x: W / 2 - HOLE_W / 2, y: FLOOR_Y, w: HOLE_W, h: 25 };
+                return { x: W / 2 - HOLE_W / 2, y: FLOOR_Y, w: HOLE_W, h: HOLE_H };
             }
         }
 
@@ -570,24 +571,27 @@
         function drawStairsDown(dr, door) {
             const hx = W / 2 - HOLE_W / 2;
             const hy = FLOOR_Y;
-            const hh = 25; // bara lite synligt
 
-            // Mörkt hål i golvet
+            // Mörkt hål i golvet (kvadrat)
             ctx.fillStyle = '#1a1008';
-            ctx.fillRect(hx, hy, HOLE_W, hh);
+            ctx.fillRect(hx, hy, HOLE_W, HOLE_H);
 
-            // Två-tre trappsteg som försvinner ner
-            ctx.fillStyle = '#a08060';
-            ctx.fillRect(hx + 3, hy + 4, HOLE_W - 6, 4);
-            ctx.fillStyle = '#887050';
-            ctx.fillRect(hx + 3, hy + 12, HOLE_W - 6, 4);
-            ctx.fillStyle = '#604830';
-            ctx.fillRect(hx + 3, hy + 20, HOLE_W - 6, 4);
+            // Trappsteg som försvinner ner
+            const steps = 4;
+            const stepH = HOLE_H / steps;
+            for (let i = 0; i < steps; i++) {
+                const shade = (steps - i) / steps;
+                const r = Math.floor(150 * shade + 20);
+                const g = Math.floor(110 * shade + 15);
+                const b = Math.floor(70 * shade + 10);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(hx + 4, hy + i * stepH + stepH - 6, HOLE_W - 8, 6);
+            }
 
             // Kant runt hålet
             ctx.strokeStyle = '#664433';
             ctx.lineWidth = 3;
-            ctx.strokeRect(hx, hy, HOLE_W, hh);
+            ctx.strokeRect(hx, hy, HOLE_W, HOLE_H);
 
             // Text
             ctx.fillStyle = '#fff';
@@ -596,7 +600,7 @@
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.7)';
             ctx.shadowBlur = 4;
-            ctx.fillText(door.label, W / 2, hy + hh + 16);
+            ctx.fillText(door.label, W / 2, hy + HOLE_H + 16);
             ctx.shadowBlur = 0;
         }
 
