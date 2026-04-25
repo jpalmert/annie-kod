@@ -329,10 +329,12 @@
                 newX = Math.max(30, Math.min(W - 30, newX));
                 newY = Math.max(FLOOR_Y + 10, Math.min(H - PAL_H - 30, newY));
 
-                // Kolla om man gick in i en trappa
+                // Kolla om man gick in i en trappa upp (bara från botten, nära golvet)
                 for (const door of room.doors) {
-                    if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
-                        if (isOnStairs(door, newX, newY)) {
+                    if (door.wall === 'stairsUp') {
+                        const sp = getStairPath(door);
+                        // Bara gå in i trappan om man är nära botten (höger sida, vid golvet)
+                        if (newX > sp.bottomX - 30 && newX < sp.bottomX + 10 && newY <= FLOOR_Y + 20) {
                             inStairs = true;
                             stairDoor = door;
                             newY = getStairY(door, newX);
