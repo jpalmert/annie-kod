@@ -583,8 +583,9 @@
             const hx = W / 2 - HOLE_W / 2;
             const hy = FLOOR_Y;
 
-            // Mörkt hål i golvet (kvadrat)
-            ctx.fillStyle = '#1a1008';
+            // Hål i golvet - visa väggfärgen från rummet under
+            const roomBelow = rooms[door.toRoom];
+            ctx.fillStyle = roomBelow.wallColor;
             ctx.fillRect(hx, hy, HOLE_W, HOLE_H);
 
             // Rita samma typ av sneda trappsteg som drawStairsUp, klippt till luckan
