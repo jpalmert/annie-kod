@@ -93,7 +93,7 @@
                 items: [],
                 doors: [
                     { wall: 'right', label: 'Kök →', toRoom: 1 },
-                    { wall: 'stairs', label: '↑ Sovrum', toRoom: 2 },
+                    { wall: 'stairsUp', label: 'Sovrum ↑', toRoom: 2 },
                 ]
             },
             {
@@ -101,7 +101,7 @@
                 items: [],
                 doors: [
                     { wall: 'left', label: '← Vardagsrum', toRoom: 0 },
-                    { wall: 'stairs', label: '↑ Badrum', toRoom: 3 },
+                    { wall: 'stairsUp', label: 'Badrum ↑', toRoom: 3 },
                 ]
             },
             {
@@ -109,7 +109,7 @@
                 items: [],
                 doors: [
                     { wall: 'right', label: 'Badrum →', toRoom: 3 },
-                    { wall: 'stairs', label: '↓ Vardagsrum', toRoom: 0 },
+                    { wall: 'stairsDown', label: 'Vardagsrum ↓', toRoom: 0 },
                 ]
             },
             {
@@ -117,7 +117,7 @@
                 items: [],
                 doors: [
                     { wall: 'left', label: '← Sovrum', toRoom: 2 },
-                    { wall: 'stairs', label: '↓ Kök', toRoom: 1 },
+                    { wall: 'stairsDown', label: 'Kök ↓', toRoom: 1 },
                 ]
             },
         ];
@@ -125,13 +125,17 @@
         let currentRoom = 0;
 
         // Dörr-rektanglar (beräknas i draw)
+        // Trappbredd
+        const STAIR_W = 90;
+
         function getDoorRect(door) {
             const dw = 60, dh = 80;
-            if (door.wall === 'left')   return { x: 5, y: FLOOR_Y - dh, w: dw, h: dh };
-            if (door.wall === 'right')  return { x: W - dw - 5, y: FLOOR_Y - dh, w: dw, h: dh };
-            if (door.wall === 'top')    return { x: W / 2 - dw / 2, y: 10, w: dw, h: dh };
-            if (door.wall === 'bottom') return { x: W / 2 - dw / 2, y: H - PAL_H - dh - 10, w: dw, h: dh };
-            if (door.wall === 'stairs') return { x: W / 2 - 45, y: FLOOR_Y - 100, w: 90, h: 120 };
+            if (door.wall === 'left')       return { x: 5, y: FLOOR_Y - dh, w: dw, h: dh };
+            if (door.wall === 'right')      return { x: W - dw - 5, y: FLOOR_Y - dh, w: dw, h: dh };
+            // Trappa upp: går från golvet och upp ut genom taket
+            if (door.wall === 'stairsUp')   return { x: W / 2 - STAIR_W / 2, y: 0, w: STAIR_W, h: FLOOR_Y };
+            // Trappa ner: går från golvet och ner genom golvet
+            if (door.wall === 'stairsDown') return { x: W / 2 - STAIR_W / 2, y: FLOOR_Y, w: STAIR_W, h: H - FLOOR_Y - PAL_H };
         }
 
         // === KARAKTÄR ===
@@ -264,11 +268,12 @@
             doorCooldown = 30;
 
             // Placera spelaren i mitten men mot rätt sida
-            if (door.wall === 'left')   { player.x = W - 100; player.y = FLOOR_Y + 40; }
-            if (door.wall === 'right')  { player.x = 100; player.y = FLOOR_Y + 40; }
-            if (door.wall === 'top')    { player.x = W / 2; player.y = FLOOR_Y + 40; }
-            if (door.wall === 'bottom') { player.x = W / 2; player.y = FLOOR_Y - 60; }
-            if (door.wall === 'stairs') { player.x = W / 2 + 80; player.y = FLOOR_Y + 40; }
+            if (door.wall === 'left')       { player.x = W - 100; player.y = FLOOR_Y + 40; }
+            if (door.wall === 'right')      { player.x = 100; player.y = FLOOR_Y + 40; }
+            // Gick uppåt → hamna nere vid trappa ner i nya rummet
+            if (door.wall === 'stairsUp')   { player.x = W / 2; player.y = H - PAL_H - 40; }
+            // Gick nedåt → hamna uppe vid trappa upp i nya rummet
+            if (door.wall === 'stairsDown') { player.x = W / 2; player.y = 40; }
         }
 
         // === RITA ===
@@ -328,8 +333,8 @@
         function drawDoor(door) {
             const dr = getDoorRect(door);
 
-            if (door.wall === 'stairs') {
-                drawStairs(dr, door.label);
+            if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
+                drawStairs(dr, door);
                 return;
             }
 
@@ -358,68 +363,69 @@
             ctx.shadowBlur = 0;
         }
 
-        function drawStairs(dr, label) {
-            // Trappbakgrund
-            ctx.fillStyle = '#8B6B4a';
+        function drawStairs(dr, door) {
+            const isUp = door.wall === 'stairsUp';
+
+            // Trappbakgrund (mörkt hål)
+            ctx.fillStyle = '#3a2a1a';
             ctx.fillRect(dr.x, dr.y, dr.w, dr.h);
 
             // Trappsteg
-            const steps = 6;
+            const steps = 8;
             const stepH = dr.h / steps;
             for (let i = 0; i < steps; i++) {
                 const sy = dr.y + i * stepH;
-                ctx.fillStyle = i % 2 === 0 ? '#c4956a' : '#b5876a';
-                ctx.fillRect(dr.x, sy, dr.w, stepH - 2);
-                ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                ctx.fillRect(dr.x, sy + stepH - 4, dr.w, 4);
+                // Stegen blir mörkare ju längre bort de är
+                const shade = isUp ? (steps - i) / steps : (i + 1) / steps;
+                const r = Math.floor(180 * shade + 40);
+                const g = Math.floor(140 * shade + 30);
+                const b = Math.floor(100 * shade + 20);
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(dr.x + 4, sy, dr.w - 8, stepH - 3);
+                // Skugga på stegkant
+                ctx.fillStyle = `rgba(0,0,0,${0.15 * shade})`;
+                ctx.fillRect(dr.x + 4, sy + stepH - 5, dr.w - 8, 3);
             }
 
             // Räcke vänster
-            ctx.strokeStyle = '#8B4513';
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#6B4513';
+            ctx.lineWidth = 5;
             ctx.beginPath();
-            ctx.moveTo(dr.x, dr.y + dr.h);
-            ctx.lineTo(dr.x, dr.y);
+            ctx.moveTo(dr.x + 2, dr.y + dr.h);
+            ctx.lineTo(dr.x + 2, dr.y);
             ctx.stroke();
 
             // Räcke höger
             ctx.beginPath();
-            ctx.moveTo(dr.x + dr.w, dr.y + dr.h);
-            ctx.lineTo(dr.x + dr.w, dr.y);
+            ctx.moveTo(dr.x + dr.w - 2, dr.y + dr.h);
+            ctx.lineTo(dr.x + dr.w - 2, dr.y);
             ctx.stroke();
 
-            // Dörr överst på trappan
-            const doorW = 50, doorH = 60;
-            const doorX = dr.x + dr.w / 2 - doorW / 2;
-            const doorY = dr.y + 5;
-
-            // Dörrram
-            ctx.fillStyle = '#6B3310';
-            ctx.fillRect(doorX - 3, doorY - 3, doorW + 6, doorH + 6);
-
-            // Dörren
-            ctx.fillStyle = '#D2691E';
-            ctx.fillRect(doorX, doorY, doorW, doorH);
-
-            // Dörrhandtag
-            ctx.beginPath();
-            ctx.arc(doorX + doorW - 12, doorY + doorH / 2, 4, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffd700';
-            ctx.fill();
-
-            // Ram runt hela trappan
-            ctx.strokeStyle = '#664433';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(dr.x, dr.y, dr.w, dr.h);
-
-            // Text
+            // Pil som visar riktning
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = 0.6;
+            if (isUp) {
+                ctx.fillText('▲', dr.x + dr.w / 2, dr.y + 25);
+            } else {
+                ctx.fillText('▼', dr.x + dr.w / 2, dr.y + dr.h - 25);
+            }
+            ctx.globalAlpha = 1;
+
+            // Text bredvid trappan
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.7)';
             ctx.shadowBlur = 4;
-            ctx.fillText(label, dr.x + dr.w / 2, dr.y + dr.h + 16);
+            if (isUp) {
+                ctx.fillText(door.label, dr.x + dr.w / 2, FLOOR_Y + 18);
+            } else {
+                ctx.fillText(door.label, dr.x + dr.w / 2, FLOOR_Y - 14);
+            }
             ctx.shadowBlur = 0;
         }
 
