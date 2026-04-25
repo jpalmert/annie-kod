@@ -595,23 +595,23 @@
             ctx.clip();
 
             const steps = 6;
-            const stepDepth = HOLE_H / steps;
-            const stepW = HOLE_W - 8;
-            const offsetPerStep = 15;
+            const stepW = HOLE_W / steps;
+            const stepH = HOLE_H - 8;
+            const offsetPerStep = 12;
 
             for (let i = 0; i < steps; i++) {
-                const sy = hy + i * stepDepth;
-                const sx = hx + HOLE_W - stepW - 4 - i * offsetPerStep;
+                const sx = hx + HOLE_W - (i + 1) * stepW;
+                const sy = hy + 4 + i * offsetPerStep;
                 const shade = (steps - i) / steps;
                 const r = Math.floor(170 * shade + 30);
                 const g = Math.floor(130 * shade + 20);
                 const b = Math.floor(90 * shade + 15);
 
                 ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(sx, sy + 2, stepW, stepDepth - 3);
+                ctx.fillRect(sx + 2, sy, stepW - 3, stepH);
 
                 ctx.fillStyle = `rgba(0,0,0,${0.15 * shade})`;
-                ctx.fillRect(sx, sy + stepDepth - 3, stepW, 2);
+                ctx.fillRect(sx + 2, sy, 2, stepH);
             }
 
             ctx.restore();
