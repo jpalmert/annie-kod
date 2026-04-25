@@ -265,6 +265,7 @@
         let selectedWallColor = null;
         let selectedFloorColor = null;
         let roomTransition = 0; // animation
+        let mouseX = 0, mouseY = 0; // musposition för förhandsvisning
 
         function setTab(tab) {
             currentTab = tab;
@@ -412,6 +413,17 @@
 
             // Rita spelaren
             drawPlayer();
+
+            // Förhandsvisning av vald möbel (genomskinlig)
+            if (selectedItem && currentTab !== 'radera' && mouseY < H - PAL_H) {
+                ctx.globalAlpha = 0.4;
+                const fontSize = Math.max(selectedItem.w, selectedItem.h);
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(selectedItem.icon, mouseX, mouseY);
+                ctx.globalAlpha = 1;
+            }
 
             // Rita paletten
             drawPalette();
@@ -950,7 +962,12 @@
 
         // === MUS ===
         canvas.addEventListener('mousedown', (e) => { handleDown(...Object.values(getCanvasPos(e.clientX, e.clientY))); });
-        canvas.addEventListener('mousemove', (e) => { handleMove(...Object.values(getCanvasPos(e.clientX, e.clientY))); });
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getCanvasPos(e.clientX, e.clientY);
+            mouseX = pos.x;
+            mouseY = pos.y;
+            handleMove(pos.x, pos.y);
+        });
         canvas.addEventListener('mouseup', () => handleUp());
 
         // === TOUCH ===
@@ -972,6 +989,8 @@
                     return;
                 }
 
+                mouseX = pos.x;
+                mouseY = pos.y;
                 handleDown(pos.x, pos.y);
             }
         }, { passive: false });
