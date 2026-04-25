@@ -66,7 +66,7 @@
 </head>
 <body>
     <h1>🏠 Annies Husbyggare! 🏠</h1>
-    <canvas id="game" width="700" height="460"></canvas>
+    <canvas id="game" width="700" height="520"></canvas>
     <div id="toolbar">
         <button class="tab-btn active" id="btn-mobler" onclick="setTab('mobler')">🛋️ Möbler</button>
         <button class="tab-btn" id="btn-dekor" onclick="setTab('dekor')">🖼️ Dekor</button>
@@ -82,7 +82,7 @@
 
         const W = canvas.width;
         const H = canvas.height;
-        const FLOOR_Y = H * 0.45; // golvet börjar här
+        const FLOOR_Y = H * 0.40; // golvet börjar här
         const PAL_H = 55;         // palettens höjd
 
         // === RUMMEN ===
@@ -171,7 +171,7 @@
         }
 
         function getDoorRect(door) {
-            const dw = 60, dh = 80;
+            const dw = 60, dh = 133; // 90x200cm
             if (door.wall === 'left')       return { x: 5, y: FLOOR_Y - 10, w: dw, h: dh };
             if (door.wall === 'right')      return { x: W - dw - 5, y: FLOOR_Y - 10, w: dw, h: dh };
             if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
@@ -188,7 +188,7 @@
         const player = {
             x: W / 2,
             y: FLOOR_Y + 40,
-            size: 50,
+            size: 100,
             speed: 4,
             icon: '🧑',
             dir: 1,
@@ -205,28 +205,28 @@
         // === SAKER ===
         const categories = {
             mobler: [
-                { name: 'Soffa',      icon: '🛋️', w: 85, h: 70 },
-                { name: 'Stol',       icon: '🪑', w: 65, h: 65 },
-                { name: 'Bord',       icon: '🪵', w: 80, h: 65 },
-                { name: 'Säng',       icon: '🛏️', w: 85, h: 70 },
-                { name: 'Lampa',      icon: '💡', w: 55, h: 60 },
-                { name: 'TV',         icon: '📺', w: 80, h: 65 },
-                { name: 'Bokhylla',   icon: '📚', w: 70, h: 70 },
-                { name: 'Skrivbord',  icon: '🖥️', w: 80, h: 65 },
-                { name: 'Garderob',   icon: '🚪', w: 65, h: 70 },
-                { name: 'Byrå',       icon: '🗄️', w: 65, h: 65 },
+                { name: 'Soffa',      icon: '🛋️', w: 120, h: 53 },  // 180x80cm
+                { name: 'Stol',       icon: '🪑', w: 30, h: 57 },   // 45x85cm
+                { name: 'Bord',       icon: '🪵', w: 80, h: 50 },   // 120x75cm
+                { name: 'Säng',       icon: '🛏️', w: 93, h: 67 },  // 140x100cm
+                { name: 'Lampa',      icon: '💡', w: 23, h: 100 },  // 35x150cm
+                { name: 'TV',         icon: '📺', w: 67, h: 40 },   // 100x60cm
+                { name: 'Bokhylla',   icon: '📚', w: 53, h: 120 },  // 80x180cm
+                { name: 'Skrivbord',  icon: '🖥️', w: 80, h: 50 },  // 120x75cm
+                { name: 'Garderob',   icon: '🚪', w: 80, h: 133 },  // 120x200cm
+                { name: 'Byrå',       icon: '🗄️', w: 53, h: 60 },  // 80x90cm
             ],
             dekor: [
-                { name: 'Tavla',      icon: '🖼️', w: 60, h: 55 },
-                { name: 'Växt',       icon: '🪴', w: 55, h: 60 },
-                { name: 'Blomma',     icon: '🌸', w: 50, h: 50 },
-                { name: 'Ljus',       icon: '🕯️', w: 45, h: 50 },
-                { name: 'Klocka',     icon: '🕐', w: 50, h: 50 },
-                { name: 'Nalle',      icon: '🧸', w: 55, h: 55 },
-                { name: 'Matta',      icon: '🟤', w: 80, h: 40 },
-                { name: 'Spegel',     icon: '🪞', w: 50, h: 60 },
-                { name: 'Hjärta',     icon: '❤️', w: 50, h: 50 },
-                { name: 'Stjärna',    icon: '⭐', w: 50, h: 50 },
+                { name: 'Tavla',      icon: '🖼️', w: 40, h: 33 },  // 60x50cm
+                { name: 'Växt',       icon: '🪴', w: 20, h: 33 },   // 30x50cm
+                { name: 'Blomma',     icon: '🌸', w: 20, h: 20 },   // 15x30cm (min 20)
+                { name: 'Ljus',       icon: '🕯️', w: 20, h: 20 },  // 10x20cm (min 20)
+                { name: 'Klocka',     icon: '🕐', w: 20, h: 20 },   // 25x25cm
+                { name: 'Nalle',      icon: '🧸', w: 20, h: 27 },   // 30x40cm
+                { name: 'Matta',      icon: '🟤', w: 100, h: 67 },  // 150x100cm
+                { name: 'Spegel',     icon: '🪞', w: 27, h: 40 },   // 40x60cm
+                { name: 'Hjärta',     icon: '❤️', w: 20, h: 20 },   // dekor
+                { name: 'Stjärna',    icon: '⭐', w: 20, h: 20 },   // dekor
             ],
         };
 
@@ -546,14 +546,16 @@
             const px = player.x;
             const py = player.y;
             const swing = Math.sin(player.bobble) * 0.5;
-            const bounce = Math.abs(Math.sin(player.bobble)) * 2;
+            const bounce = Math.abs(Math.sin(player.bobble)) * 3;
+            const S = 1.6; // skala
 
             ctx.translate(px, py - bounce);
+            ctx.scale(S, S);
             if (player.dir === -1) ctx.scale(-1, 1);
 
             // Skugga
             ctx.beginPath();
-            ctx.ellipse(0, 30 + bounce, 16, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 30 + bounce / S, 16, 5, 0, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(0,0,0,0.18)';
             ctx.fill();
 
