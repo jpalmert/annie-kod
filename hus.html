@@ -580,68 +580,53 @@
         }
 
         function drawStairsDown(dr, door) {
-            const sp = getStairPath(door);
-            const steps = 8;
+            const hx = W / 2 - HOLE_W / 2;
+            const hy = FLOOR_Y;
 
-            // Trappsteg snett ner genom golvet (spegelvänt från trappa upp)
+            // Mörkt hål i golvet (kvadrat)
+            ctx.fillStyle = '#1a1008';
+            ctx.fillRect(hx, hy, HOLE_W, HOLE_H);
+
+            // Sneda trappsteg sedda från sidan, som går ner åt höger i hålet
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hx, hy, HOLE_W, HOLE_H);
+            ctx.clip(); // klipp så stegen bara syns inuti hålet
+
+            const steps = 4;
+            const stepW = 18;
+            const stepH = 14;
             for (let i = 0; i < steps; i++) {
-                const t = i / steps;
-                const t2 = (i + 1) / steps;
-                const x1 = sp.topX + t * (sp.bottomX - sp.topX);
-                const y1 = sp.topY + t * (sp.bottomY - sp.topY);
-                const x2 = sp.topX + t2 * (sp.bottomX - sp.topX);
-                const y2 = sp.topY + t2 * (sp.bottomY - sp.topY);
-                const stepW = 50;
-
-                // Stegen blir mörkare ju längre ner
+                const sx = hx + 5 + i * stepW;
+                const sy = hy + 5 + i * stepH;
                 const shade = (steps - i) / steps;
                 const r = Math.floor(160 * shade + 30);
                 const g = Math.floor(120 * shade + 20);
                 const b = Math.floor(80 * shade + 15);
 
+                // Stegyta (horisontell)
                 ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(x1 - stepW / 2, y1, stepW, 4);
-
-                ctx.fillStyle = `rgb(${r-20},${g-15},${b-10})`;
-                ctx.fillRect(x1 - stepW / 2, y1 + 4, stepW, y2 - y1 - 4);
-
-                ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                ctx.fillRect(x1 - stepW / 2, y1 + 4, stepW, 3);
+                ctx.fillRect(sx, sy, stepW, 4);
+                // Stegvägg (vertikal)
+                ctx.fillStyle = `rgb(${r-30},${g-20},${b-15})`;
+                ctx.fillRect(sx, sy + 4, stepW, stepH - 4);
             }
 
-            // Räcke
-            ctx.strokeStyle = '#6B4513';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(sp.topX + 25, sp.topY);
-            ctx.lineTo(sp.bottomX + 25, sp.bottomY);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(sp.topX - 25, sp.topY);
-            ctx.lineTo(sp.bottomX - 25, sp.bottomY);
-            ctx.stroke();
+            ctx.restore();
 
-            // Räckepinnar
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const px = sp.topX + t * (sp.bottomX - sp.topX);
-                const py = sp.topY + t * (sp.bottomY - sp.topY);
-                ctx.strokeStyle = '#8B6540';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(px + 25, py);
-                ctx.lineTo(px + 25, py - 25);
-                ctx.stroke();
-            }
+            // Kant runt hålet
+            ctx.strokeStyle = '#664433';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(hx, hy, HOLE_W, HOLE_H);
 
             // Text
             ctx.fillStyle = '#fff';
-            ctx.font = 'bold 14px Arial';
+            ctx.font = 'bold 13px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.7)';
             ctx.shadowBlur = 4;
-            ctx.fillText(door.label, sp.topX, sp.topY - 14);
+            ctx.fillText(door.label, W / 2, hy + HOLE_H + 16);
             ctx.shadowBlur = 0;
         }
 
