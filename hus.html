@@ -133,16 +133,14 @@
         // stairsDown: toppen vid golvet vänster, botten försvinner nedåt höger
         function getStairPath(door) {
             if (door.wall === 'stairsUp') {
-                // Börjar nere till höger, slutar uppe till vänster
                 return {
-                    bottomX: W - 40,          bottomY: FLOOR_Y,
-                    topX: W - 40 - STAIR_W,   topY: 0
+                    bottomX: W / 2 + STAIR_W / 2,   bottomY: FLOOR_Y,
+                    topX: W / 2 - STAIR_W / 2,      topY: 0
                 };
             } else {
-                // Börjar uppe till vänster, slutar nere till höger
                 return {
-                    topX: W - 40 - STAIR_W,   topY: FLOOR_Y,
-                    bottomX: W - 40,           bottomY: H - PAL_H
+                    topX: W / 2 - STAIR_W / 2,      topY: FLOOR_Y,
+                    bottomX: W / 2 + STAIR_W / 2,   bottomY: H - PAL_H
                 };
             }
         }
@@ -362,13 +360,11 @@
             if (door.wall === 'left')       { player.x = W - 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'right')      { player.x = 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'stairsUp') {
-                // Gick uppåt → hamna vid botten av trappa ner i nya rummet
-                player.x = W - 60;
+                player.x = W / 2 + STAIR_W / 2;
                 player.y = FLOOR_Y + 40;
             }
             if (door.wall === 'stairsDown') {
-                // Gick nedåt → hamna vid botten av trappa upp i nya rummet
-                player.x = W - 60;
+                player.x = W / 2 + STAIR_W / 2;
                 player.y = FLOOR_Y + 40;
             }
         }
