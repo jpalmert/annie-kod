@@ -133,14 +133,16 @@
         // stairsDown: toppen vid golvet vänster, botten försvinner nedåt höger
         function getStairPath(door) {
             if (door.wall === 'stairsUp') {
+                // Börjar vid golvet till höger, går snett upp till vänster och ut ur bild
                 return {
                     bottomX: W / 2 + STAIR_W / 2,   bottomY: FLOOR_Y,
                     topX: W / 2 - STAIR_W / 2,      topY: 0
                 };
             } else {
+                // Börjar vid golvet till vänster, går snett ner till höger genom golvet
                 return {
                     topX: W / 2 - STAIR_W / 2,      topY: FLOOR_Y,
-                    bottomX: W / 2 + STAIR_W / 2,   bottomY: H - PAL_H
+                    bottomX: W / 2 + STAIR_W / 2,   bottomY: FLOOR_Y + (H - FLOOR_Y - PAL_H)
                 };
             }
         }
@@ -361,12 +363,14 @@
             if (door.wall === 'left')       { player.x = W - 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'right')      { player.x = 100; player.y = FLOOR_Y + 40; }
             if (door.wall === 'stairsUp') {
-                player.x = W / 2 + STAIR_W / 2;
-                player.y = FLOOR_Y + 40;
+                // Gick upp → hamna vid toppen av trappa ner i nya rummet (vid golvet, vänster)
+                player.x = W / 2 - STAIR_W / 2;
+                player.y = FLOOR_Y;
             }
             if (door.wall === 'stairsDown') {
+                // Gick ner → hamna vid botten av trappa upp i nya rummet (vid golvet, höger)
                 player.x = W / 2 + STAIR_W / 2;
-                player.y = FLOOR_Y + 40;
+                player.y = FLOOR_Y;
             }
         }
 
