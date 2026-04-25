@@ -393,10 +393,9 @@
                 player.y = FLOOR_Y + 10;
             }
             if (door.wall === 'stairsDown') {
-                // Gick ner → hamna överst på trappa upp i rummet under
-                const sp = getStairPath({ wall: 'stairsUp' });
-                player.x = sp.topX + 20;
-                player.y = getStairY({ wall: 'stairsUp' }, sp.topX + 20);
+                // Gick ner → hamna vid botten av trappa upp i rummet under (på golvet)
+                player.x = W / 2 + STAIR_W / 2 + 30;
+                player.y = FLOOR_Y + 10;
             }
         }
 
