@@ -130,8 +130,8 @@
 
         function getDoorRect(door) {
             const dw = 60, dh = 80;
-            if (door.wall === 'left')       return { x: 5, y: FLOOR_Y - dh, w: dw, h: dh };
-            if (door.wall === 'right')      return { x: W - dw - 5, y: FLOOR_Y - dh, w: dw, h: dh };
+            if (door.wall === 'left')       return { x: 5, y: FLOOR_Y - 10, w: dw, h: dh };
+            if (door.wall === 'right')      return { x: W - dw - 5, y: FLOOR_Y - 10, w: dw, h: dh };
             // Trappa upp: går från golvet och upp ut genom taket
             if (door.wall === 'stairsUp')   return { x: W / 2 - STAIR_W / 2, y: 0, w: STAIR_W, h: FLOOR_Y };
             // Trappa ner: går från golvet och ner genom golvet
