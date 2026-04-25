@@ -543,26 +543,98 @@
 
         function drawPlayer() {
             ctx.save();
-            const bob = Math.sin(player.bobble) * 3;
             const px = player.x;
-            const py = player.y + bob;
+            const py = player.y;
+            const swing = Math.sin(player.bobble) * 0.4; // arm/ben-sving
+
+            ctx.translate(px, py);
+            if (player.dir === -1) ctx.scale(-1, 1);
 
             // Skugga
             ctx.beginPath();
-            ctx.ellipse(px, player.y + player.size / 2 + 5, 16, 5, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 28, 14, 4, 0, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(0,0,0,0.2)';
             ctx.fill();
 
-            // Karaktär
-            ctx.font = `${player.size}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            if (player.dir === -1) {
-                ctx.scale(-1, 1);
-                ctx.fillText(player.icon, -px, py);
-            } else {
-                ctx.fillText(player.icon, px, py);
-            }
+            // Vänster ben
+            ctx.save();
+            ctx.translate(-6, 12);
+            ctx.rotate(swing);
+            ctx.fillStyle = '#3355aa';
+            ctx.fillRect(-4, 0, 8, 18);
+            // Sko
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-4, 16, 10, 5);
+            ctx.restore();
+
+            // Höger ben
+            ctx.save();
+            ctx.translate(6, 12);
+            ctx.rotate(-swing);
+            ctx.fillStyle = '#3355aa';
+            ctx.fillRect(-4, 0, 8, 18);
+            // Sko
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-4, 16, 10, 5);
+            ctx.restore();
+
+            // Kropp
+            ctx.fillStyle = '#ff5577';
+            ctx.beginPath();
+            ctx.roundRect(-10, -8, 20, 22, 4);
+            ctx.fill();
+
+            // Vänster arm
+            ctx.save();
+            ctx.translate(-10, -4);
+            ctx.rotate(-swing);
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(-4, 0, 6, 16);
+            // Hand
+            ctx.beginPath();
+            ctx.arc(-1, 16, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Höger arm
+            ctx.save();
+            ctx.translate(10, -4);
+            ctx.rotate(swing);
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(-2, 0, 6, 16);
+            // Hand
+            ctx.beginPath();
+            ctx.arc(1, 16, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Huvud
+            ctx.fillStyle = '#ffcc99';
+            ctx.beginPath();
+            ctx.arc(0, -18, 13, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hår
+            ctx.fillStyle = '#553300';
+            ctx.beginPath();
+            ctx.arc(0, -22, 13, Math.PI, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillRect(-13, -23, 26, 5);
+
+            // Ögon
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(-5, -19, 2, 0, Math.PI * 2);
+            ctx.arc(5, -19, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Leende
+            ctx.strokeStyle = '#cc4455';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, -15, 5, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+
             ctx.restore();
         }
 
