@@ -286,34 +286,60 @@
             let moving = false;
             let newX = player.x;
             let newY = player.y;
-            if (keys['ArrowUp'] || keys['w'] || keys['W'])    { newY -= player.speed; moving = true; }
-            if (keys['ArrowDown'] || keys['s'] || keys['S'])  { newY += player.speed; moving = true; }
-            if (keys['ArrowLeft'] || keys['a'] || keys['A'])  { newX -= player.speed; player.dir = -1; moving = true; }
-            if (keys['ArrowRight'] || keys['d'] || keys['D']) { newX += player.speed; player.dir = 1; moving = true; }
+            const goUp = keys['ArrowUp'] || keys['w'] || keys['W'];
+            const goDown = keys['ArrowDown'] || keys['s'] || keys['S'];
+            const goLeft = keys['ArrowLeft'] || keys['a'] || keys['A'];
+            const goRight = keys['ArrowRight'] || keys['d'] || keys['D'];
 
-            // Vänster/höger begränsas alltid till skärmen
-            newX = Math.max(30, Math.min(W - 30, newX));
-
-            // Kolla om spelaren är i/nära en trappa
+            // Kolla om spelaren redan är i en trappa
             const room = rooms[currentRoom];
             let inStairs = false;
             let stairDoor = null;
             for (const door of room.doors) {
                 if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
-                    if (isOnStairs(door, newX, newY) || isOnStairs(door, player.x, player.y)) {
+                    if (isOnStairs(door, player.x, player.y)) {
                         inStairs = true;
                         stairDoor = door;
-                        // Låt spelaren följa trappans lutning
-                        const stairY = getStairY(door, newX);
-                        newY = stairY;
                         break;
                     }
                 }
             }
 
-            if (!inStairs) {
-                // Utanför trappan: bara golvet
+            if (inStairs) {
+                // I trappan: upp/vänster = gå uppåt i trappan, ner/höger = gå nedåt
+                // Trappan går från topX (uppe) till bottomX (nere)
+                // Vänster/upp = mot topX, höger/ner = mot bottomX
+                if (goUp || goLeft)  { newX -= player.speed; player.dir = -1; moving = true; }
+                if (goDown || goRight) { newX += player.speed; player.dir = 1; moving = true; }
+                newX = Math.max(30, Math.min(W - 30, newX));
+                // Kolla om fortfarande i trappan
+                if (isOnStairs(stairDoor, newX, getStairY(stairDoor, newX))) {
+                    newY = getStairY(stairDoor, newX);
+                } else {
+                    // Lämnade trappan, landa på golvet
+                    newY = FLOOR_Y + 10;
+                    inStairs = false;
+                }
+            } else {
+                // På golvet: vanlig rörelse
+                if (goUp)    { newY -= player.speed; moving = true; }
+                if (goDown)  { newY += player.speed; moving = true; }
+                if (goLeft)  { newX -= player.speed; player.dir = -1; moving = true; }
+                if (goRight) { newX += player.speed; player.dir = 1; moving = true; }
+                newX = Math.max(30, Math.min(W - 30, newX));
                 newY = Math.max(FLOOR_Y + 10, Math.min(H - PAL_H - 30, newY));
+
+                // Kolla om man gick in i en trappa
+                for (const door of room.doors) {
+                    if (door.wall === 'stairsUp' || door.wall === 'stairsDown') {
+                        if (isOnStairs(door, newX, newY)) {
+                            inStairs = true;
+                            stairDoor = door;
+                            newY = getStairY(door, newX);
+                            break;
+                        }
+                    }
+                }
             }
 
             player.x = newX;
