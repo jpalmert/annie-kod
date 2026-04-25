@@ -272,14 +272,25 @@
 
             if (doorCooldown > 0) { doorCooldown--; return; }
 
-            // Kolla om spelaren går in i en dörr
-            const room = rooms[currentRoom];
+            // Kolla dörrar och trappor
             for (const door of room.doors) {
-                const dr = getDoorRect(door);
-                if (player.x > dr.x && player.x < dr.x + dr.w &&
-                    player.y > dr.y && player.y < dr.y + dr.h) {
+                if (door.wall === 'stairsUp' && inStairs && player.y <= 5) {
+                    // Gick upp ut ur skärmen
                     enterRoom(door);
-                    break;
+                    return;
+                }
+                if (door.wall === 'stairsDown' && inStairs && player.y >= H - PAL_H - 15) {
+                    // Gick ner ut ur skärmen
+                    enterRoom(door);
+                    return;
+                }
+                if (door.wall !== 'stairsUp' && door.wall !== 'stairsDown') {
+                    const dr = getDoorRect(door);
+                    if (player.x > dr.x && player.x < dr.x + dr.w &&
+                        player.y > dr.y && player.y < dr.y + dr.h) {
+                        enterRoom(door);
+                        return;
+                    }
                 }
             }
         }
