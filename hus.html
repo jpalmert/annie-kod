@@ -310,46 +310,58 @@
             }
         }
 
+        function roomHas(room, name) {
+            return room.items.some(i => i.name === name);
+        }
+
         function rateHouse() {
             let score = 0;
-            let totalItems = 0;
-            let totalColors = 0;
-            let hasRoomsWithStuff = 0;
-            let uniqueTypes = new Set();
-            let hasMobler = false;
-            let hasDekor = false;
-            let minPerRoom = 999;
             const defaultWalls = ['#ffe6cc', '#e6ffe6', '#cce6ff', '#ffe6f0'];
             const defaultFloors = ['#c4956a', '#b5a67a', '#d9d9d9'];
+            const vardagsrum = rooms[0];
+            const kok = rooms[1];
+            const sovrum = rooms[2];
+            const badrum = rooms[3];
 
-            for (let i = 0; i < rooms.length; i++) {
-                const room = rooms[i];
-                const count = room.items.length;
-                totalItems += count;
-                if (count > 0) hasRoomsWithStuff++;
-                if (count < minPerRoom) minPerRoom = count;
+            // ⭐ 1: Sovrummet har en säng och vardagsrummet har en soffa
+            if (roomHas(sovrum, 'Säng') && roomHas(vardagsrum, 'Soffa')) score++;
 
-                for (const item of room.items) {
-                    uniqueTypes.add(item.name);
-                    if (categories.mobler.some(m => m.name === item.name)) hasMobler = true;
-                    if (categories.dekor && Object.keys(dekorDrawers).includes(item.name) ||
-                        ['Ljus','Klocka','Nalle','Blomma','Hjärta','Stjärna'].includes(item.name)) hasDekor = true;
-                }
+            // ⭐ 2: Köket har bord och stol, badrummet har en spegel
+            if (roomHas(kok, 'Bord') && roomHas(kok, 'Stol') && roomHas(badrum, 'Spegel')) score++;
 
-                if (!defaultWalls.includes(room.wallColor)) totalColors++;
-                if (!defaultFloors.includes(room.floorColor)) totalColors++;
+            // ⭐ 3: Varje rum har minst en lampa eller ljus, och det finns dekor i minst 2 rum
+            let roomsWithLight = 0;
+            let roomsWithDekor = 0;
+            for (const room of rooms) {
+                if (roomHas(room, 'Lampa') || roomHas(room, 'Ljus')) roomsWithLight++;
+                if (room.items.some(i => ['Tavla','Växt','Blomma','Nalle','Hjärta','Stjärna','Klocka'].includes(i.name))) roomsWithDekor++;
             }
+            if (roomsWithLight >= 4 && roomsWithDekor >= 2) score++;
 
-            // ⭐ 1: Möblera minst 3 rum med minst 2 saker i varje
-            if (hasRoomsWithStuff >= 3 && totalItems >= 6) score++;
-            // ⭐ 2: Alla 4 rum möblerade
-            if (hasRoomsWithStuff >= 4) score++;
-            // ⭐ 3: Minst 5 olika typer av saker och ändrat färger i minst 3 rum
-            if (uniqueTypes.size >= 5 && totalColors >= 3) score++;
-            // ⭐ 4: Både möbler och dekor, 8+ olika typer, alla rum har minst 3 saker
-            if (hasMobler && hasDekor && uniqueTypes.size >= 8 && minPerRoom >= 3) score++;
-            // ⭐ 5: 10+ olika typer, alla rum har 4+ saker, alla väggar och golv ändrade
-            if (uniqueTypes.size >= 10 && minPerRoom >= 4 && totalColors >= 7 && totalItems >= 20) score++;
+            // ⭐ 4: Alla väggar eller golv ändrade, och varje rum har 3+ saker
+            let changedColors = 0;
+            let allRoomsHave3 = true;
+            for (let i = 0; i < rooms.length; i++) {
+                if (!defaultWalls.includes(rooms[i].wallColor)) changedColors++;
+                if (!defaultFloors.includes(rooms[i].floorColor)) changedColors++;
+                if (rooms[i].items.length < 3) allRoomsHave3 = false;
+            }
+            if (changedColors >= 6 && allRoomsHave3) score++;
+
+            // ⭐ 5: Allt ovan plus: garderob i sovrummet, bokhylla nånstans,
+            //        TV i vardagsrummet, matta i minst 2 rum, 25+ saker totalt
+            let totalItems = 0;
+            let roomsWithMatta = 0;
+            for (const room of rooms) {
+                totalItems += room.items.length;
+                if (roomHas(room, 'Matta')) roomsWithMatta++;
+            }
+            if (score >= 4 &&
+                roomHas(sovrum, 'Garderob') &&
+                rooms.some(r => roomHas(r, 'Bokhylla')) &&
+                roomHas(vardagsrum, 'TV') &&
+                roomsWithMatta >= 2 &&
+                totalItems >= 25) score++;
 
             ratingScore = score;
             pengar += score * 100;
