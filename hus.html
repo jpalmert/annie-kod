@@ -187,8 +187,8 @@
 
         function getDoorRect(door) {
             const dw = 60, dh = 133; // 90x200cm
-            if (door.wall === 'left')       return { x: 5, y: FLOOR_Y - 10, w: dw, h: dh };
-            if (door.wall === 'right')      return { x: W - dw - 5, y: FLOOR_Y - 10, w: dw, h: dh };
+            if (door.wall === 'left')       return { x: 0, y: FLOOR_Y - 10, w: dw, h: dh };
+            if (door.wall === 'right')      return { x: W - dw, y: FLOOR_Y - 10, w: dw, h: dh };
             if (door.wall === 'stairsUp') {
                 const sp = getStairPath(door);
                 return { x: sp.topX, y: sp.topY, w: sp.bottomX - sp.topX, h: sp.bottomY - sp.topY };
@@ -663,7 +663,7 @@
             }
 
             // Dörr från sidan - brunt streck längs kanten
-            const doorX = door.wall === 'left' ? dr.x + dr.w - 8 : dr.x;
+            const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
             ctx.fillStyle = '#8B4513';
             ctx.fillRect(doorX, dr.y, 8, dr.h);
 
