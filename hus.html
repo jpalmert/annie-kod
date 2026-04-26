@@ -315,29 +315,41 @@
             let totalItems = 0;
             let totalColors = 0;
             let hasRoomsWithStuff = 0;
+            let uniqueTypes = new Set();
+            let hasMobler = false;
+            let hasDekor = false;
+            let minPerRoom = 999;
+            const defaultWalls = ['#ffe6cc', '#e6ffe6', '#cce6ff', '#ffe6f0'];
+            const defaultFloors = ['#c4956a', '#b5a67a', '#d9d9d9'];
 
-            for (const room of rooms) {
+            for (let i = 0; i < rooms.length; i++) {
+                const room = rooms[i];
                 const count = room.items.length;
                 totalItems += count;
                 if (count > 0) hasRoomsWithStuff++;
+                if (count < minPerRoom) minPerRoom = count;
 
-                // Kolla om väggen eller golvet ändrats
-                if (room.wallColor !== '#ffe6cc' && room.wallColor !== '#e6ffe6' &&
-                    room.wallColor !== '#cce6ff' && room.wallColor !== '#ffe6f0') totalColors++;
-                if (room.floorColor !== '#c4956a' && room.floorColor !== '#b5a67a' &&
-                    room.floorColor !== '#d9d9d9') totalColors++;
+                for (const item of room.items) {
+                    uniqueTypes.add(item.name);
+                    if (categories.mobler.some(m => m.name === item.name)) hasMobler = true;
+                    if (categories.dekor && Object.keys(dekorDrawers).includes(item.name) ||
+                        ['Ljus','Klocka','Nalle','Blomma','Hjärta','Stjärna'].includes(item.name)) hasDekor = true;
+                }
+
+                if (!defaultWalls.includes(room.wallColor)) totalColors++;
+                if (!defaultFloors.includes(room.floorColor)) totalColors++;
             }
 
-            // Poäng 1: Har du möblerat?
-            if (totalItems >= 3) score++;
-            // Poäng 2: Har du möblerat flera rum?
-            if (hasRoomsWithStuff >= 2) score++;
-            // Poäng 3: Har du mycket grejer?
-            if (totalItems >= 8) score++;
-            // Poäng 4: Har du ändrat färger?
-            if (totalColors >= 2) score++;
-            // Poäng 5: Har du möblerat alla rum och ändrat färger?
-            if (hasRoomsWithStuff >= 4 && totalColors >= 3 && totalItems >= 12) score++;
+            // ⭐ 1: Möblera minst 3 rum med minst 2 saker i varje
+            if (hasRoomsWithStuff >= 3 && totalItems >= 6) score++;
+            // ⭐ 2: Alla 4 rum möblerade
+            if (hasRoomsWithStuff >= 4) score++;
+            // ⭐ 3: Minst 5 olika typer av saker och ändrat färger i minst 3 rum
+            if (uniqueTypes.size >= 5 && totalColors >= 3) score++;
+            // ⭐ 4: Både möbler och dekor, 8+ olika typer, alla rum har minst 3 saker
+            if (hasMobler && hasDekor && uniqueTypes.size >= 8 && minPerRoom >= 3) score++;
+            // ⭐ 5: 10+ olika typer, alla rum har 4+ saker, alla väggar och golv ändrade
+            if (uniqueTypes.size >= 10 && minPerRoom >= 4 && totalColors >= 7 && totalItems >= 20) score++;
 
             ratingScore = score;
             pengar += score * 100;
