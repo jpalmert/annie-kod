@@ -387,14 +387,32 @@
             const needPerRoom = 2 + Math.floor(luck * 2); // 2-3 per rum
             if (score >= 3 && changedColors >= needColors && minItems >= needPerRoom) score++;
 
-            // ⭐ 5: Fullt hus - krav varierar
+            // ⭐ 5: Kök komplett
             const star5Options = [
-                roomHas(sovrum, 'Garderob') && roomHas(vardagsrum, 'TV') && roomsWithMatta >= 2 && totalItems >= 20,
-                rooms.some(r => roomHas(r, 'Bokhylla')) && (roomHas(badrum, 'Dusch') || roomHas(badrum, 'Badkar')) && totalItems >= 22,
-                roomHas(badrum, 'Spegel') && roomHas(kok, 'Kylskåp') && roomHas(sovrum, 'Garderob') && totalItems >= 18,
-                roomsWithMatta >= 2 && roomHas(vardagsrum, 'TV') && roomHas(vardagsrum, 'Bokhylla') && changedColors >= 6 && totalItems >= 24,
+                roomHas(kok, 'Kylskåp') && roomHas(kok, 'Spis') && roomHas(kok, 'Diskbänk'),
+                roomHas(kok, 'Kylskåp') && roomHas(kok, 'Bord') && roomHas(kok, 'Stol') && roomHas(kok, 'Spis'),
+                roomHas(kok, 'Diskbänk') && roomHas(kok, 'Kylskåp') && totalItems >= 15,
             ];
-            if (score >= 4 && star5Options[Math.floor(luck * 13) % star5Options.length]) score++;
+            if (score >= 4 && star5Options[Math.floor(luck * 11) % star5Options.length]) score++;
+
+            // ⭐ 6: Badrum komplett
+            if (score >= 5 && roomHas(badrum, 'Toalett') && roomHas(badrum, 'Handfat') &&
+                (roomHas(badrum, 'Dusch') || roomHas(badrum, 'Badkar')) && roomHas(badrum, 'Spegel')) score++;
+
+            // ⭐ 7: Mysigt - mattor och dekor överallt
+            if (score >= 6 && roomsWithMatta >= 2 + Math.floor(luck * 2) && roomsWithDekor >= 3) score++;
+
+            // ⭐ 8: Fullt möblerat - alla rum har 4+ saker
+            if (score >= 7 && minItems >= 4 && totalItems >= 20 + Math.floor(luck * 5)) score++;
+
+            // ⭐ 9: Alla färger ändrade
+            if (score >= 8 && changedColors >= 7) score++;
+
+            // ⭐ 10: Drömhuset - allt perfekt
+            if (score >= 9 &&
+                roomHas(sovrum, 'Garderob') && roomHas(vardagsrum, 'TV') &&
+                roomHas(vardagsrum, 'Bokhylla') && rooms.some(r => roomHas(r, 'Skrivbord')) &&
+                totalItems >= 28 + Math.floor(luck * 5)) score++;
 
             ratingScore = score;
             pengar += score * 100;
@@ -637,13 +655,9 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText('Husets betyg!', W / 2, H / 2 - 40);
 
-                // Stjärnor
-                let stars = '';
-                for (let i = 0; i < 5; i++) {
-                    stars += i < ratingScore ? '⭐' : '☆';
-                }
-                ctx.font = '30px Arial';
-                ctx.fillText(stars, W / 2, H / 2);
+                // Poäng
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText(ratingScore + ' / 10', W / 2, H / 2);
 
                 ctx.fillStyle = '#fff';
                 ctx.font = 'bold 18px Arial';
