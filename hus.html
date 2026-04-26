@@ -276,6 +276,10 @@
         let selectedWallColor = null;
         let selectedFloorColor = null;
         let roomTransition = 0; // animation
+        let pengar = 0;
+        let showRating = false;
+        let ratingScore = 0;
+        let ratingTimer = 0;
         let mouseX = 0, mouseY = 0; // musposition för förhandsvisning
 
         function setTab(tab) {
@@ -304,6 +308,41 @@
             } else {
                 controls.style.display = 'none';
             }
+        }
+
+        function rateHouse() {
+            let score = 0;
+            let totalItems = 0;
+            let totalColors = 0;
+            let hasRoomsWithStuff = 0;
+
+            for (const room of rooms) {
+                const count = room.items.length;
+                totalItems += count;
+                if (count > 0) hasRoomsWithStuff++;
+
+                // Kolla om väggen eller golvet ändrats
+                if (room.wallColor !== '#ffe6cc' && room.wallColor !== '#e6ffe6' &&
+                    room.wallColor !== '#cce6ff' && room.wallColor !== '#ffe6f0') totalColors++;
+                if (room.floorColor !== '#c4956a' && room.floorColor !== '#b5a67a' &&
+                    room.floorColor !== '#d9d9d9') totalColors++;
+            }
+
+            // Poäng 1: Har du möblerat?
+            if (totalItems >= 3) score++;
+            // Poäng 2: Har du möblerat flera rum?
+            if (hasRoomsWithStuff >= 2) score++;
+            // Poäng 3: Har du mycket grejer?
+            if (totalItems >= 8) score++;
+            // Poäng 4: Har du ändrat färger?
+            if (totalColors >= 2) score++;
+            // Poäng 5: Har du möblerat alla rum och ändrat färger?
+            if (hasRoomsWithStuff >= 4 && totalColors >= 3 && totalItems >= 12) score++;
+
+            ratingScore = score;
+            pengar += score * 100;
+            showRating = true;
+            ratingTimer = 180;
         }
 
         // === UPPDATERA ===
@@ -499,6 +538,59 @@
 
             // Rita paletten
             drawPalette();
+
+            // Pengar och betygsknapp uppe till höger
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 3;
+            ctx.fillText('💰 ' + pengar + ' kr', W - 60, 8);
+            ctx.shadowBlur = 0;
+
+            // Betygsknapp
+            ctx.fillStyle = '#ff77aa';
+            ctx.beginPath(); ctx.roundRect(W - 55, 4, 50, 24, 12); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⭐ Betyg', W - 30, 16);
+
+            // Visa betyg om det just bedömts
+            if (showRating && ratingTimer > 0) {
+                ratingTimer--;
+                if (ratingTimer <= 0) showRating = false;
+
+                const alpha = ratingTimer > 30 ? 1 : ratingTimer / 30;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.beginPath(); ctx.roundRect(W / 2 - 130, H / 2 - 70, 260, 140, 15); ctx.fill();
+
+                ctx.fillStyle = '#ffd700';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Husets betyg!', W / 2, H / 2 - 40);
+
+                // Stjärnor
+                let stars = '';
+                for (let i = 0; i < 5; i++) {
+                    stars += i < ratingScore ? '⭐' : '☆';
+                }
+                ctx.font = '30px Arial';
+                ctx.fillText(stars, W / 2, H / 2);
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 18px Arial';
+                if (ratingScore > 0) {
+                    ctx.fillText('+' + (ratingScore * 100) + ' kr!', W / 2, H / 2 + 35);
+                } else {
+                    ctx.fillText('Dekorera mer!', W / 2, H / 2 + 35);
+                }
+                ctx.globalAlpha = 1;
+            }
 
             // Transition-effekt
             if (roomTransition > 0) {
@@ -1470,6 +1562,11 @@
         }
 
         function handleDown(cx, cy) {
+            // Betygsknapp (uppe till höger)
+            if (cx >= W - 55 && cx <= W - 5 && cy >= 4 && cy <= 28) {
+                rateHouse();
+                return;
+            }
             // Palett
             const pal = getPaletteItemAt(cx, cy);
             if (pal) {
