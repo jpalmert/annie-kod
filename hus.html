@@ -73,6 +73,11 @@
         <button class="tab-btn" id="btn-vagar" onclick="setTab('vagar')">🎨 Väggar</button>
         <button class="tab-btn" id="btn-golv" onclick="setTab('golv')">🟫 Golv</button>
         <button class="tab-btn" id="btn-radera" onclick="setTab('radera')">🗑️ Radera</button>
+        <span id="size-controls" style="display:none; align-items:center; gap:4px;">
+            <button class="tab-btn" style="background:#555;color:#fff;padding:6px 12px;" onclick="changeSize(-0.25)">−</button>
+            <span id="size-label" style="color:#fff;font-weight:bold;min-width:40px;text-align:center;">100%</span>
+            <button class="tab-btn" style="background:#555;color:#fff;padding:6px 12px;" onclick="changeSize(0.25)">+</button>
+        </span>
     </div>
     <div id="hint">Piltangenter = gå | Gå till en dörr för att byta rum | Klicka för att placera grejer!</div>
 
@@ -264,6 +269,7 @@
         // === STATE ===
         let currentTab = 'mobler';
         let selectedItem = null;
+        let selectedScale = 1.0;
         let dragging = null;
         let dragOffX = 0, dragOffY = 0;
         let paletteItems = [];
@@ -275,11 +281,29 @@
         function setTab(tab) {
             currentTab = tab;
             selectedItem = null;
+            selectedScale = 1.0;
             selectedWallColor = null;
             selectedFloorColor = null;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             const btn = document.getElementById('btn-' + tab);
             if (btn) btn.classList.add('active');
+            updateSizeControls();
+        }
+
+        function changeSize(delta) {
+            selectedScale = Math.max(0.25, Math.min(3.0, selectedScale + delta));
+            updateSizeControls();
+        }
+
+        function updateSizeControls() {
+            const controls = document.getElementById('size-controls');
+            const label = document.getElementById('size-label');
+            if (selectedItem) {
+                controls.style.display = 'flex';
+                label.textContent = Math.round(selectedScale * 100) + '%';
+            } else {
+                controls.style.display = 'none';
+            }
         }
 
         // === UPPDATERA ===
@@ -455,12 +479,20 @@
             // Rita spelaren
             drawPlayer();
 
-            // Förhandsvisning av vald möbel (genomskinlig)
+            // Förhandsvisning av vald möbel (genomskinlig, med vald storlek)
             if (selectedItem && currentTab !== 'radera' && mouseY < H - PAL_H) {
                 ctx.globalAlpha = 0.4;
+                const sw = selectedItem.w * selectedScale;
+                const sh = selectedItem.h * selectedScale;
                 const drawer = itemDrawers[selectedItem.name] || dekorDrawers[selectedItem.name];
                 if (drawer) {
-                    drawer(mouseX - selectedItem.w / 2, mouseY - selectedItem.h / 2, selectedItem.w, selectedItem.h);
+                    drawer(mouseX - sw / 2, mouseY - sh / 2, sw, sh);
+                } else {
+                    const fontSize = Math.max(sw, sh);
+                    ctx.font = `${fontSize}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(selectedItem.icon, mouseX, mouseY);
                 }
                 ctx.globalAlpha = 1;
             }
@@ -1351,9 +1383,10 @@
             // Palett
             const pal = getPaletteItemAt(cx, cy);
             if (pal) {
-                if (pal.item) { selectedItem = pal.item; selectedWallColor = null; selectedFloorColor = null; }
+                if (pal.item) { selectedItem = pal.item; selectedScale = 1.0; selectedWallColor = null; selectedFloorColor = null; }
                 else if (pal.wallColor) { selectedWallColor = pal.wallColor; selectedItem = null; selectedFloorColor = null; }
                 else if (pal.floorColor) { selectedFloorColor = pal.floorColor; selectedItem = null; selectedWallColor = null; }
+                updateSizeControls();
                 return;
             }
 
@@ -1389,15 +1422,17 @@
                 return;
             }
 
-            // Placera ny sak
+            // Placera ny sak med vald storlek
             if (selectedItem && cy < H - PAL_H) {
+                const sw = selectedItem.w * selectedScale;
+                const sh = selectedItem.h * selectedScale;
                 room.items.push({
                     icon: selectedItem.icon,
                     name: selectedItem.name,
-                    x: cx - selectedItem.w / 2,
-                    y: cy - selectedItem.h / 2,
-                    w: selectedItem.w,
-                    h: selectedItem.h
+                    x: cx - sw / 2,
+                    y: cy - sh / 2,
+                    w: sw,
+                    h: sh
                 });
             }
         }
