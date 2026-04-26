@@ -292,6 +292,8 @@
         let selectedWallColor = null;
         let selectedFloorColor = null;
         let roomTransition = 0; // animation
+        let doorOpenAnim = 0; // hur öppen dörren är (0-1)
+        let doorOpenSide = null; // vilken sida dörren öppnades
         let pengar = 0;
         let showRating = false;
         let ratingScore = 0;
@@ -402,6 +404,7 @@
 
         // === UPPDATERA ===
         function updatePlayer() {
+            if (doorOpenAnim > 0) doorOpenAnim -= 0.04;
             if (roomTransition > 0) { roomTransition--; return; }
 
             let moving = false;
@@ -501,6 +504,10 @@
         let doorCooldown = 0;
 
         function enterRoom(door) {
+            if (door.wall === 'left' || door.wall === 'right') {
+                doorOpenAnim = 1;
+                doorOpenSide = door.wall;
+            }
             currentRoom = door.toRoom;
             roomTransition = 15;
             doorCooldown = 30;
@@ -662,13 +669,13 @@
                 return;
             }
 
-            // Hur nära är spelaren? (0 = långt bort, 1 = precis vid)
-            const dist = Math.abs(player.x - (dr.x + dr.w / 2));
-            const openAmount = Math.max(0, 1 - dist / 100); // 0-1
+            // Dörranimation - öppen om man just gick igenom denna sida
+            const isOpening = doorOpenAnim > 0 && doorOpenSide === door.wall;
+            const openAmount = isOpening ? doorOpenAnim : 0;
 
-            // Dörr från sidan - bredd minskar när den öppnas (roterar bort)
+            // Dörr från sidan - blir bredare när den öppnas
             const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
-            const doorW = 8 + openAmount * 30; // bredare = mer öppen (ser mer av dörren)
+            const doorW = 8 + openAmount * 35;
             const actualX = door.wall === 'left' ? doorX : doorX + 8 - doorW;
             ctx.fillStyle = '#8B4513';
             ctx.beginPath();
