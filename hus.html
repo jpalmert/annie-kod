@@ -1049,189 +1049,201 @@
                 ctx.fillText('❄', x + w * 0.4, y + h * 0.5);
             },
             'Spis': (x, y, w, h) => {
-                // Stomme
+                // Stomme (från sidan)
                 ctx.fillStyle = '#333';
                 ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.fill();
-                // Ugn (glaslucka)
-                ctx.fillStyle = '#222';
-                ctx.fillRect(x + 4, y + h * 0.35, w - 8, h * 0.55);
-                ctx.fillStyle = '#1a1a2a';
-                ctx.fillRect(x + 6, y + h * 0.38, w - 12, h * 0.48);
-                // Ugnshandtag
-                ctx.fillStyle = '#888';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.2, y + h * 0.32, w * 0.6, 3, 1); ctx.fill();
-                // Plattor ovanpå
+                // Topp/häll
                 ctx.fillStyle = '#444';
-                ctx.fillRect(x + 2, y + 2, w - 4, h * 0.28);
-                // Brännare (4 stycken)
-                const bx1 = x + w * 0.25, bx2 = x + w * 0.75;
-                const by1 = y + h * 0.08, by2 = y + h * 0.22;
-                ctx.strokeStyle = '#666';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.arc(bx1, by1, 6, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(bx2, by1, 6, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(bx1, by2, 6, 0, Math.PI * 2); ctx.stroke();
-                ctx.beginPath(); ctx.arc(bx2, by2, 6, 0, Math.PI * 2); ctx.stroke();
-                // Rattar
+                ctx.fillRect(x + 2, y, w - 4, 5);
+                // Ugn (glaslucka sedd från sidan)
+                ctx.fillStyle = '#222';
+                ctx.beginPath(); ctx.roundRect(x + 5, y + h * 0.25, w - 10, h * 0.6, 2); ctx.fill();
+                // Ugnsglasreflekt
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.fillRect(x + 7, y + h * 0.28, (w - 14) * 0.4, h * 0.25);
+                // Handtag
                 ctx.fillStyle = '#888';
+                ctx.beginPath(); ctx.roundRect(x + w * 0.2, y + h * 0.2, w * 0.6, 3, 1); ctx.fill();
+                // Rattar på framsidan
+                ctx.fillStyle = '#777';
                 for (let i = 0; i < 4; i++) {
-                    ctx.beginPath(); ctx.arc(x + 6 + i * (w - 12) / 3, y + h * 0.30, 2.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x + 8 + i * (w - 16) / 3, y + h * 0.12, 3, 0, Math.PI * 2); ctx.fill();
                 }
+                // Ben
+                ctx.fillStyle = '#222';
+                ctx.fillRect(x + 3, y + h - 3, 5, 3);
+                ctx.fillRect(x + w - 8, y + h - 3, 5, 3);
             },
             'Diskbänk': (x, y, w, h) => {
+                // Skåp under (från sidan)
+                ctx.fillStyle = '#aa8855';
+                ctx.beginPath(); ctx.roundRect(x, y + 5, w, h - 5, 2); ctx.fill();
+                // Skåpdörrar
+                ctx.strokeStyle = '#997744';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 3, y + 8, w / 2 - 4, h - 14);
+                ctx.strokeRect(x + w / 2 + 1, y + 8, w / 2 - 4, h - 14);
+                // Dörrhandtag
+                ctx.fillStyle = '#ccc';
+                ctx.beginPath(); ctx.arc(x + w / 2 - 6, y + h * 0.5, 2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x + w / 2 + 6, y + h * 0.5, 2, 0, Math.PI * 2); ctx.fill();
                 // Bänkskiva
                 ctx.fillStyle = '#bbb';
-                ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.fill();
-                // Diskho (vänster)
+                ctx.fillRect(x - 2, y, w + 4, 7);
+                // Diskho (inbuktning i bänkskivan)
                 ctx.fillStyle = '#999';
-                ctx.beginPath(); ctx.roundRect(x + 5, y + 5, w * 0.4, h - 10, 4); ctx.fill();
-                ctx.fillStyle = '#888';
-                ctx.beginPath(); ctx.roundRect(x + 8, y + 8, w * 0.4 - 6, h - 16, 3); ctx.fill();
-                // Avlopp
-                ctx.fillStyle = '#666';
-                ctx.beginPath(); ctx.arc(x + 5 + w * 0.2, y + h * 0.6, 3, 0, Math.PI * 2); ctx.fill();
-                // Kran
+                ctx.beginPath(); ctx.roundRect(x + w * 0.1, y + 1, w * 0.35, 5, 2); ctx.fill();
+                // Kran (från sidan)
                 ctx.strokeStyle = '#aaa';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
-                ctx.moveTo(x + w * 0.5, y + h * 0.7);
-                ctx.lineTo(x + w * 0.5, y + h * 0.15);
-                ctx.quadraticCurveTo(x + w * 0.5, y + 4, x + w * 0.38, y + h * 0.15);
+                ctx.moveTo(x + w * 0.55, y + 3);
+                ctx.lineTo(x + w * 0.55, y - 15);
+                ctx.quadraticCurveTo(x + w * 0.55, y - 20, x + w * 0.45, y - 18);
                 ctx.stroke();
-                // Avställningsyta (höger)
-                ctx.fillStyle = '#aaa';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.5 + 5, y + 5, w * 0.45, h - 10, 3); ctx.fill();
-                // Linjer på avställning
-                ctx.strokeStyle = '#999';
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i < 4; i++) {
-                    const ly = y + 10 + i * (h - 20) / 4;
-                    ctx.beginPath(); ctx.moveTo(x + w * 0.55, ly); ctx.lineTo(x + w - 8, ly); ctx.stroke();
-                }
             },
             'Dusch': (x, y, w, h) => {
-                // Bakvägg/kakel
-                ctx.fillStyle = '#ddeeff';
+                // Duschkabin sedd från sidan - glasvägg
+                ctx.fillStyle = 'rgba(200,220,240,0.3)';
                 ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.fill();
-                // Kakelmönster
-                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i < 6; i++) {
-                    ctx.beginPath(); ctx.moveTo(x, y + i * h / 5); ctx.lineTo(x + w, y + i * h / 5); ctx.stroke();
-                }
-                for (let i = 0; i < 4; i++) {
-                    ctx.beginPath(); ctx.moveTo(x + i * w / 3, y); ctx.lineTo(x + i * w / 3, y + h); ctx.stroke();
-                }
-                // Duschstång
+                ctx.strokeStyle = '#99aabb';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.stroke();
+                // Ram
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.stroke();
+                // Duschstång på väggen
                 ctx.fillStyle = '#999';
-                ctx.fillRect(x + w * 0.7, y + h * 0.05, 3, h * 0.7);
-                // Duschmunstycke
+                ctx.fillRect(x + w * 0.75, y + h * 0.05, 3, h * 0.55);
+                // Duschhuvud
                 ctx.fillStyle = '#aaa';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.55, y + h * 0.05, w * 0.25, 10, 3); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(x + w * 0.76, y + h * 0.05, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
                 // Vattenstrålar
-                ctx.strokeStyle = 'rgba(100,180,255,0.4)';
+                ctx.strokeStyle = 'rgba(100,180,255,0.3)';
                 ctx.lineWidth = 1;
-                for (let i = 0; i < 4; i++) {
-                    const sx = x + w * 0.58 + i * 5;
-                    ctx.beginPath(); ctx.moveTo(sx, y + h * 0.12); ctx.lineTo(sx + 2, y + h * 0.4); ctx.stroke();
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + w * 0.68 + i * 4, y + h * 0.1);
+                    ctx.lineTo(x + w * 0.65 + i * 4, y + h * 0.55);
+                    ctx.stroke();
                 }
                 // Golv
                 ctx.fillStyle = '#bbccdd';
-                ctx.fillRect(x + 2, y + h - 8, w - 4, 6);
+                ctx.fillRect(x + 2, y + h - 5, w - 4, 5);
             },
             'Badkar': (x, y, w, h) => {
-                // Badkaret
+                // Badkar sett från sidan
+                // Karet
                 const karGrad = ctx.createLinearGradient(x, y, x, y + h);
                 karGrad.addColorStop(0, '#fff');
                 karGrad.addColorStop(1, '#ddd');
                 ctx.fillStyle = karGrad;
-                ctx.beginPath(); ctx.roundRect(x, y + h * 0.2, w, h * 0.8, [0, 0, 10, 10]); ctx.fill();
-                // Insida
-                ctx.fillStyle = '#eef4ff';
-                ctx.beginPath(); ctx.roundRect(x + 4, y + h * 0.25, w - 8, h * 0.55, 6); ctx.fill();
-                // Vatten
-                ctx.fillStyle = 'rgba(100,180,255,0.25)';
-                ctx.beginPath(); ctx.roundRect(x + 6, y + h * 0.4, w - 12, h * 0.35, 4); ctx.fill();
-                // Övre kant
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.roundRect(x, y + h * 0.18, w, 8, 4); ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(x + 8, y + h * 0.15);
+                ctx.lineTo(x + w - 8, y + h * 0.15);
+                ctx.quadraticCurveTo(x + w, y + h * 0.15, x + w, y + h * 0.4);
+                ctx.lineTo(x + w, y + h * 0.85);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - 10, y + h);
+                ctx.lineTo(x + 10, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h * 0.85);
+                ctx.lineTo(x, y + h * 0.4);
+                ctx.quadraticCurveTo(x, y + h * 0.15, x + 8, y + h * 0.15);
+                ctx.closePath();
+                ctx.fill();
                 ctx.strokeStyle = '#bbb';
-                ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.roundRect(x, y + h * 0.18, w, 8, 4); ctx.stroke();
-                // Kran
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                // Kant ovanpå
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.roundRect(x + 2, y + h * 0.12, w - 4, 6, 3); ctx.fill();
+                // Vatten inuti (syns ovanför kanten)
+                ctx.fillStyle = 'rgba(100,180,255,0.2)';
+                ctx.fillRect(x + 5, y + h * 0.18, w - 10, 8);
+                // Kran (till höger, sticker upp)
                 ctx.fillStyle = '#aaa';
-                ctx.fillRect(x + w * 0.82, y, 4, h * 0.25);
-                ctx.beginPath(); ctx.arc(x + w * 0.82, y + h * 0.02, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillRect(x + w - 15, y, 4, h * 0.18);
+                ctx.beginPath();
+                ctx.moveTo(x + w - 15, y + 2);
+                ctx.quadraticCurveTo(x + w - 15, y - 5, x + w - 22, y);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 3;
+                ctx.stroke();
                 // Fötter
                 ctx.fillStyle = '#999';
-                ctx.beginPath(); ctx.arc(x + 8, y + h - 2, 4, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(x + w - 8, y + h - 2, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(x + 10, y + h, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(x + w - 10, y + h, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
             },
             'Toalett': (x, y, w, h) => {
-                // Cistern
+                // Toalett sedd från sidan
+                // Cistern (baktill, uppe)
                 ctx.fillStyle = '#eee';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.15, y, w * 0.7, h * 0.35, 4); ctx.fill();
+                ctx.beginPath(); ctx.roundRect(x + w * 0.55, y, w * 0.4, h * 0.45, 3); ctx.fill();
                 ctx.strokeStyle = '#ccc';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 // Spolknapp
                 ctx.fillStyle = '#ccc';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.35, y + h * 0.05, w * 0.3, h * 0.08, 3); ctx.fill();
-                // Sits
+                ctx.beginPath(); ctx.roundRect(x + w * 0.65, y + 2, w * 0.2, 5, 2); ctx.fill();
+                // Skålen (från sidan)
                 ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.ellipse(x + w / 2, y + h * 0.65, w * 0.42, h * 0.3, 0, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#ccc';
-                ctx.stroke();
-                // Lock
-                ctx.fillStyle = '#f4f4f4';
-                ctx.beginPath(); ctx.ellipse(x + w / 2, y + h * 0.55, w * 0.36, h * 0.2, 0, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = '#ddd';
-                ctx.stroke();
-                // Koppling cistern-sits
-                ctx.fillStyle = '#eee';
-                ctx.fillRect(x + w * 0.35, y + h * 0.33, w * 0.3, h * 0.1);
-            },
-            'Handfat': (x, y, w, h) => {
-                // Väggfäste
-                ctx.fillStyle = '#ccc';
-                ctx.fillRect(x + w * 0.3, y, w * 0.4, h * 0.15);
-                // Fatet
-                const fatGrad = ctx.createLinearGradient(x, y + h * 0.15, x, y + h * 0.65);
-                fatGrad.addColorStop(0, '#fff');
-                fatGrad.addColorStop(1, '#ddd');
-                ctx.fillStyle = fatGrad;
                 ctx.beginPath();
-                ctx.moveTo(x + 2, y + h * 0.15);
-                ctx.lineTo(x + w - 2, y + h * 0.15);
-                ctx.lineTo(x + w * 0.8, y + h * 0.6);
-                ctx.quadraticCurveTo(x + w / 2, y + h * 0.7, x + w * 0.2, y + h * 0.6);
+                ctx.moveTo(x + w * 0.55, y + h * 0.4);
+                ctx.lineTo(x + w * 0.55, y + h * 0.85);
+                ctx.quadraticCurveTo(x + w * 0.55, y + h, x + w * 0.35, y + h);
+                ctx.lineTo(x + w * 0.1, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h * 0.8);
+                ctx.quadraticCurveTo(x, y + h * 0.45, x + w * 0.2, y + h * 0.4);
                 ctx.closePath();
                 ctx.fill();
-                ctx.strokeStyle = '#bbb';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#ccc';
                 ctx.stroke();
-                // Kran
-                ctx.fillStyle = '#aaa';
-                ctx.fillRect(x + w / 2 - 2, y + h * 0.02, 4, h * 0.2);
+                // Lock/sits (linje ovanpå)
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(x + w / 2, y + h * 0.02, 4, 0, Math.PI * 2);
-                ctx.fill();
-                // Kranarmar
-                ctx.fillStyle = '#88aaff';
-                ctx.beginPath(); ctx.arc(x + w * 0.35, y + h * 0.12, 3, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#ff6644';
-                ctx.beginPath(); ctx.arc(x + w * 0.65, y + h * 0.12, 3, 0, Math.PI * 2); ctx.fill();
-                // Avlopp
-                ctx.fillStyle = '#999';
-                ctx.beginPath(); ctx.arc(x + w / 2, y + h * 0.5, 3, 0, Math.PI * 2); ctx.fill();
-                // Rör under
+                ctx.moveTo(x + w * 0.55, y + h * 0.4);
+                ctx.quadraticCurveTo(x + w * 0.1, y + h * 0.33, x + w * 0.05, y + h * 0.45);
+                ctx.stroke();
+            },
+            'Handfat': (x, y, w, h) => {
+                // Handfat sett från sidan
+                // Rör/ben under
                 ctx.strokeStyle = '#aaa';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(x + w / 2, y + h * 0.55);
-                ctx.quadraticCurveTo(x + w / 2, y + h * 0.8, x + w / 2 - 5, y + h);
+                ctx.moveTo(x + w * 0.35, y + h * 0.45);
+                ctx.lineTo(x + w * 0.35, y + h * 0.75);
+                ctx.quadraticCurveTo(x + w * 0.35, y + h, x + w * 0.5, y + h);
                 ctx.stroke();
+                // Fatet (från sidan - en skål)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(x, y + h * 0.3);
+                ctx.lineTo(x + w, y + h * 0.3);
+                ctx.lineTo(x + w * 0.85, y + h * 0.5);
+                ctx.quadraticCurveTo(x + w / 2, y + h * 0.58, x + w * 0.15, y + h * 0.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#bbb';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                // Kran (sticker upp från sidan)
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.7, y + h * 0.3);
+                ctx.lineTo(x + w * 0.7, y + h * 0.05);
+                ctx.quadraticCurveTo(x + w * 0.7, y - 2, x + w * 0.55, y + h * 0.05);
+                ctx.stroke();
+                // Kranarmar
+                ctx.fillStyle = '#88aaff';
+                ctx.beginPath(); ctx.arc(x + w * 0.6, y + h * 0.2, 3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#ff6644';
+                ctx.beginPath(); ctx.arc(x + w * 0.8, y + h * 0.2, 3, 0, Math.PI * 2); ctx.fill();
             },
         };
 
