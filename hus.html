@@ -670,10 +670,17 @@
                 return;
             }
 
-            // Dörr från sidan - brunt streck
+            // Dörr från sidan - brunt streck med gul prick
             const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
             ctx.fillStyle = '#8B4513';
             ctx.fillRect(doorX, dr.y, 8, dr.h);
+
+            // Handtag
+            const knobX = door.wall === 'left' ? doorX + 12 : doorX - 4;
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(knobX, dr.y + dr.h / 2, 4, 0, Math.PI * 2);
+            ctx.fill();
 
             // Text
             ctx.fillStyle = '#fff';
