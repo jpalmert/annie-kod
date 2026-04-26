@@ -670,25 +670,25 @@
                 return;
             }
 
-            // Dörranimation - öppen om man just gick igenom denna sida
+            // Dörranimation
             const isOpening = doorOpenAnim > 0 && doorOpenSide === door.wall;
             const openAmount = isOpening ? doorOpenAnim : 0;
 
-            // Dörr från sidan - blir bredare när den öppnas
+            // Dörr från sidan - strecket blir smalare när den öppnas (svänger bort från oss)
             const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
-            const doorW = 8 + openAmount * 35;
-            const actualX = door.wall === 'left' ? doorX : doorX + 8 - doorW;
-            ctx.fillStyle = '#8B4513';
-            ctx.beginPath();
-            ctx.roundRect(actualX, dr.y, doorW, dr.h, 2);
-            ctx.fill();
+            const doorW = Math.max(2, 8 * (1 - openAmount * 0.8));
 
-            // Handtag (gul prick)
-            const knobX = door.wall === 'left' ? actualX + doorW + 4 : actualX - 4;
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath();
-            ctx.arc(knobX, dr.y + dr.h / 2, 4, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(doorX, dr.y, doorW, dr.h);
+
+            // Handtag (gul prick) - försvinner lite när dörren öppnas
+            if (openAmount < 0.5) {
+                const knobX = door.wall === 'left' ? doorX + doorW + 4 : doorX - 4;
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(knobX, dr.y + dr.h / 2, 4 * (1 - openAmount), 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             // Text
             ctx.fillStyle = '#fff';
