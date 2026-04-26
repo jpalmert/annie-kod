@@ -77,6 +77,7 @@
         <button class="tab-btn" id="btn-vagar" onclick="setTab('vagar')">🎨 Väggar</button>
         <button class="tab-btn" id="btn-golv" onclick="setTab('golv')">🟫 Golv</button>
         <button class="tab-btn" id="btn-radera" onclick="setTab('radera')">🗑️ Radera</button>
+        <button class="tab-btn" id="btn-vaning" onclick="buyFloor()" style="background:#aa55cc;color:#fff;">🏗️ Köp våning (500kr)</button>
         <span id="size-controls" style="display:none; align-items:center; gap:4px;">
             <button class="tab-btn" style="background:#555;color:#fff;padding:6px 12px;" onclick="changeSize(-0.25)">−</button>
             <span id="size-label" style="color:#fff;font-weight:bold;min-width:40px;text-align:center;">100%</span>
@@ -331,6 +332,61 @@
             }
         }
 
+        const FLOOR_COST = 500;
+        let floors = 2; // börjar med 2 våningar
+
+        function buyFloor() {
+            if (pengar >= FLOOR_COST) {
+                pengar -= FLOOR_COST;
+                floors++;
+                const newFloor = floors;
+                const roomIdx = rooms.length;
+                // Lägg till 2 nya rum
+                const roomNames = ['Gästrum', 'Hobbyrum', 'Kontor', 'Lekrum', 'Bibliotek', 'Studio', 'Tvättstuga', 'Förråd'];
+                const name1 = roomNames[(floors - 3) * 2 % roomNames.length];
+                const name2 = roomNames[((floors - 3) * 2 + 1) % roomNames.length];
+                const wallColors2 = ['#f0e6ff', '#e6fff0', '#fff0e6', '#e6f0ff'];
+                const wc1 = wallColors2[(floors - 3) % wallColors2.length];
+                const wc2 = wallColors2[(floors - 2) % wallColors2.length];
+
+                // Rum till vänster (kopplat uppåt från rum under vänster)
+                const underLeft = roomIdx - 2; // rummet under till vänster
+                const underRight = roomIdx - 1;
+                rooms.push({
+                    name: name1, wallColor: wc1, floorColor: '#c4956a',
+                    items: [],
+                    doors: [
+                        { wall: 'right', label: name2 + ' →', toRoom: roomIdx + 1 },
+                        { wall: 'stairsDown', label: rooms[underLeft].name + ' ↓', toRoom: underLeft },
+                    ]
+                });
+                rooms.push({
+                    name: name2, wallColor: wc2, floorColor: '#c4956a',
+                    items: [],
+                    doors: [
+                        { wall: 'left', label: '← ' + name1, toRoom: roomIdx },
+                        { wall: 'stairsDown', label: rooms[underRight].name + ' ↓', toRoom: underRight },
+                    ]
+                });
+
+                // Lägg till trappa upp i rummen under
+                rooms[underLeft].doors.push({ wall: 'stairsUp', label: name1 + ' ↑', toRoom: roomIdx });
+                rooms[underRight].doors.push({ wall: 'stairsUp', label: name2 + ' ↑', toRoom: roomIdx + 1 });
+
+                // Ta bort gamla stairsUp om det redan fanns en (kan bara ha en trappa upp per rum)
+                // behåll bara den senaste
+                for (const r of [rooms[underLeft], rooms[underRight]]) {
+                    const stairsUp = r.doors.filter(d => d.wall === 'stairsUp');
+                    if (stairsUp.length > 1) {
+                        const idx = r.doors.indexOf(stairsUp[0]);
+                        r.doors.splice(idx, 1);
+                    }
+                }
+
+                document.getElementById('btn-vaning').textContent = '🏗️ Köp våning (' + FLOOR_COST + 'kr)';
+            }
+        }
+
         function roomHas(room, name) {
             return room.items.some(i => i.name === name);
         }
@@ -450,7 +506,7 @@
                 visitor.lookTimer--;
                 if (visitor.lookTimer <= 0) {
                     visitor.roomsVisited++;
-                    if (visitor.roomsVisited < 4) {
+                    if (visitor.roomsVisited < rooms.length) {
                         // Gå till nästa rum
                         currentRoom = visitor.roomsVisited;
                         visitor.x = -40;
