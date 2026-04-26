@@ -1104,57 +1104,22 @@
                 ctx.stroke();
             },
             'Dusch': (x, y, w, h) => {
-                // Golv/bas
-                ctx.fillStyle = '#ccddee';
-                ctx.fillRect(x, y + h - 6, w, 6);
-                // Avlopp
-                ctx.fillStyle = '#999';
-                ctx.beginPath(); ctx.arc(x + w * 0.4, y + h - 3, 3, 0, Math.PI * 2); ctx.fill();
-                // Bakvägg (kakel-look)
-                ctx.fillStyle = '#e8eef4';
-                ctx.fillRect(x + w * 0.7, y, w * 0.3, h - 6);
-                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-                ctx.lineWidth = 0.5;
-                for (let i = 1; i < 8; i++) {
-                    ctx.beginPath(); ctx.moveTo(x + w * 0.7, y + i * h / 8); ctx.lineTo(x + w, y + i * h / 8); ctx.stroke();
-                }
-                // Duschstång på väggen
-                ctx.fillStyle = '#bbb';
-                ctx.fillRect(x + w * 0.82, y + h * 0.08, 3, h * 0.6);
-                // Duschhuvud (vinklad nedåt)
+                const cx = x + w / 2;
+                // Stång
+                const stangGrad = ctx.createLinearGradient(cx - 3, 0, cx + 3, 0);
+                stangGrad.addColorStop(0, '#bbb');
+                stangGrad.addColorStop(0.5, '#e0e0e0');
+                stangGrad.addColorStop(1, '#aaa');
+                ctx.fillStyle = stangGrad;
+                ctx.fillRect(cx - 3, y + h * 0.15, 6, h * 0.85);
+                // Fot
                 ctx.fillStyle = '#aaa';
-                ctx.save();
-                ctx.translate(x + w * 0.83, y + h * 0.08);
-                ctx.rotate(0.3);
-                ctx.beginPath(); ctx.roundRect(-8, -4, 16, 7, 3); ctx.fill();
-                ctx.restore();
-                // Slang från huvud till stång
-                ctx.strokeStyle = '#bbb';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(x + w * 0.83, y + h * 0.12);
-                ctx.quadraticCurveTo(x + w * 0.75, y + h * 0.25, x + w * 0.83, y + h * 0.35);
-                ctx.stroke();
-                // Vattenstrålar
-                ctx.strokeStyle = 'rgba(100,180,255,0.35)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 6; i++) {
-                    const sx = x + w * 0.72 + i * 4;
-                    ctx.beginPath();
-                    ctx.moveTo(sx, y + h * 0.13);
-                    ctx.lineTo(sx - 5, y + h * 0.65);
-                    ctx.stroke();
-                }
-                // Glasdörr (fram)
-                ctx.strokeStyle = 'rgba(150,180,210,0.6)';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(x + 2, y); ctx.lineTo(x + 2, y + h - 6); ctx.stroke();
-                // Dörrhandtag
-                ctx.fillStyle = '#aaa';
-                ctx.beginPath(); ctx.arc(x + 6, y + h * 0.45, 3, 0, Math.PI * 2); ctx.fill();
-                // Övre ram
-                ctx.fillStyle = '#aaa';
-                ctx.fillRect(x, y, w, 3);
+                ctx.beginPath(); ctx.roundRect(cx - 10, y + h - 5, 20, 5, 2); ctx.fill();
+                // Duschikon
+                ctx.font = `${w * 0.8}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🚿', cx, y + h * 0.12);
             },
             'Badkar': (x, y, w, h) => {
                 // Badkar sett från sidan
