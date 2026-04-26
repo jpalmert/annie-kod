@@ -773,9 +773,12 @@
                 ctx.fillRect(x + w / 2 - 8, y + h * 0.75, 16, h * 0.1);
                 ctx.fillRect(x + w * 0.2, y + h * 0.85, w * 0.6, 4);
             },
-            'Bokhylla': (x, y, w, h) => {
+            'Bokhylla': (x, y, w, h, seed) => {
+                const s = seed || 0;
+                const woodColors = ['#885522', '#774433', '#665533', '#886644'];
+                const wi = Math.floor(s * woodColors.length) % woodColors.length;
                 // Ramverk
-                ctx.fillStyle = '#885522';
+                ctx.fillStyle = woodColors[wi];
                 ctx.fillRect(x, y, w, h);
                 ctx.fillStyle = '#774411';
                 ctx.fillRect(x, y, 4, h);
@@ -787,16 +790,19 @@
                     ctx.fillStyle = '#996633';
                     ctx.fillRect(x, sy, w, 4);
                 }
-                // Böcker på varje hylla
-                const colors = ['#cc3333','#3366cc','#33aa55','#ddaa33','#9944aa','#dd6633','#3399aa','#aa3366'];
-                for (let s = 0; s < shelves; s++) {
-                    const sy = y + (s / shelves) * h + 5;
+                // Böcker - slumpmässiga färger och bredder baserat på seed
+                const colors = ['#cc3333','#3366cc','#33aa55','#ddaa33','#9944aa','#dd6633','#3399aa','#aa3366','#cc6699','#339966','#dd4444','#4477bb'];
+                let rng = Math.floor(s * 10000);
+                for (let shelf = 0; shelf < shelves; shelf++) {
+                    const sy = y + (shelf / shelves) * h + 5;
                     const sh = (h / shelves) - 6;
                     let bx = x + 5;
-                    for (let b = 0; b < 4 + Math.floor(s * 0.5); b++) {
-                        const bw = 3 + (b * 2) % 4;
+                    const numBooks = 3 + (rng % 4);
+                    for (let b = 0; b < numBooks; b++) {
+                        rng = (rng * 31 + 7) % 1000;
+                        const bw = 3 + rng % 5;
                         if (bx + bw > x + w - 5) break;
-                        ctx.fillStyle = colors[(s * 3 + b) % colors.length];
+                        ctx.fillStyle = colors[rng % colors.length];
                         ctx.fillRect(bx, sy, bw, sh);
                         bx += bw + 1;
                     }
@@ -865,28 +871,72 @@
         };
 
         const dekorDrawers = {
-            'Tavla': (x, y, w, h) => {
+            'Tavla': (x, y, w, h, seed) => {
+                const s = seed || 0;
+                const ramColors = ['#aa8833', '#885522', '#666', '#994444', '#336655'];
+                const bgColors = ['#aaddff', '#ffeedd', '#ddffdd', '#ffddee', '#ddeeff', '#ffffcc'];
+                const landColors = ['#55aa55', '#aa5533', '#5566aa', '#aa8833', '#6644aa'];
+                const ri = Math.floor(s * ramColors.length) % ramColors.length;
+                const bi = Math.floor(s * 17) % bgColors.length;
+                const li = Math.floor(s * 31) % landColors.length;
                 // Ram
-                ctx.fillStyle = '#aa8833';
+                ctx.fillStyle = ramColors[ri];
                 ctx.fillRect(x, y, w, h);
-                // Bild
-                ctx.fillStyle = '#aaddff';
+                // Bild bakgrund
+                ctx.fillStyle = bgColors[bi];
                 ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
-                // Landskap
-                ctx.fillStyle = '#55aa55';
-                ctx.beginPath();
-                ctx.moveTo(x + 3, y + h * 0.6);
-                ctx.lineTo(x + w * 0.3, y + h * 0.3);
-                ctx.lineTo(x + w * 0.6, y + h * 0.5);
-                ctx.lineTo(x + w * 0.8, y + h * 0.25);
-                ctx.lineTo(x + w - 3, y + h * 0.6);
-                ctx.lineTo(x + w - 3, y + h - 3);
-                ctx.lineTo(x + 3, y + h - 3);
-                ctx.closePath();
-                ctx.fill();
-                // Sol
-                ctx.fillStyle = '#ffdd44';
-                ctx.beginPath(); ctx.arc(x + w * 0.8, y + h * 0.2, 5, 0, Math.PI * 2); ctx.fill();
+                // Motiv varierar
+                const type = Math.floor(s * 100) % 4;
+                if (type === 0) {
+                    // Landskap med berg
+                    ctx.fillStyle = landColors[li];
+                    ctx.beginPath();
+                    ctx.moveTo(x + 3, y + h * 0.65);
+                    ctx.lineTo(x + w * 0.25, y + h * 0.25);
+                    ctx.lineTo(x + w * 0.5, y + h * 0.5);
+                    ctx.lineTo(x + w * 0.75, y + h * 0.2);
+                    ctx.lineTo(x + w - 3, y + h * 0.6);
+                    ctx.lineTo(x + w - 3, y + h - 3);
+                    ctx.lineTo(x + 3, y + h - 3);
+                    ctx.closePath(); ctx.fill();
+                    ctx.fillStyle = '#ffdd44';
+                    ctx.beginPath(); ctx.arc(x + w * 0.8, y + h * 0.18, 4, 0, Math.PI * 2); ctx.fill();
+                } else if (type === 1) {
+                    // Abstrakt med cirklar
+                    const circColors = ['#ff6666','#66aaff','#ffcc33','#66dd66','#dd66dd'];
+                    for (let i = 0; i < 4; i++) {
+                        ctx.fillStyle = circColors[Math.floor((s * 100 + i * 7) % circColors.length)];
+                        ctx.beginPath();
+                        ctx.arc(x + 6 + (s * 50 + i * 12) % (w - 12), y + 6 + (s * 70 + i * 10) % (h - 12), 3 + i * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (type === 2) {
+                    // Solnedgång
+                    const skyGrad = ctx.createLinearGradient(x, y + 3, x, y + h - 3);
+                    skyGrad.addColorStop(0, '#ff8844');
+                    skyGrad.addColorStop(0.5, '#ffcc66');
+                    skyGrad.addColorStop(1, '#4466aa');
+                    ctx.fillStyle = skyGrad;
+                    ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+                    ctx.fillStyle = '#ff6622';
+                    ctx.beginPath(); ctx.arc(x + w / 2, y + h * 0.45, 6, 0, Math.PI * 2); ctx.fill();
+                } else {
+                    // Blommor
+                    ctx.fillStyle = '#55aa55';
+                    ctx.fillRect(x + 3, y + h * 0.6, w - 6, h * 0.4 - 3);
+                    const flowerColors = ['#ff4466','#ffaa33','#ff66cc','#aa44ff','#ff6644'];
+                    for (let i = 0; i < 3; i++) {
+                        const fx = x + 8 + (s * 80 + i * 15) % (w - 16);
+                        const fy = y + h * 0.35 + (s * 40 + i * 8) % (h * 0.25);
+                        ctx.strokeStyle = '#338833';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.moveTo(fx, fy + 8); ctx.lineTo(fx, y + h * 0.6); ctx.stroke();
+                        ctx.fillStyle = flowerColors[Math.floor((s * 50 + i * 3) % flowerColors.length)];
+                        ctx.beginPath(); ctx.arc(fx, fy, 4, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#ffee55';
+                        ctx.beginPath(); ctx.arc(fx, fy, 2, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
             },
             'Växt': (x, y, w, h) => {
                 const cx = x + w / 2;
@@ -947,22 +997,32 @@
                 drawLeaf(cx - w * 0.1, y + h * 0.32, -0.2, 8);
                 drawLeaf(cx + w * 0.12, y + h * 0.3, 0.3, 8);
             },
-            'Blomma': (x, y, w, h) => {
+            'Blomma': (x, y, w, h, seed) => {
+                const s = seed || 0;
+                const petalColors = ['#ff66aa', '#ff4444', '#ffaa33', '#aa44ff', '#ff66ff', '#4488ff', '#ff8866', '#ffffff'];
+                const midColors = ['#ffdd33', '#ffaa00', '#ff6633', '#ffffff'];
+                const pi = Math.floor(s * petalColors.length) % petalColors.length;
+                const mi = Math.floor(s * 17) % midColors.length;
+                const numPetals = 4 + Math.floor(s * 37) % 4; // 4-7 kronblad
+                const rotation = s * Math.PI * 2;
                 // Stjälk
                 ctx.strokeStyle = '#33aa33';
                 ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.moveTo(x + w / 2, y + h); ctx.lineTo(x + w / 2, y + h * 0.35); ctx.stroke();
+                // Blad på stjälken
+                ctx.fillStyle = '#44bb44';
+                ctx.beginPath(); ctx.ellipse(x + w / 2 - 4, y + h * 0.65, 4, 2, -0.8, 0, Math.PI * 2); ctx.fill();
                 // Kronblad
                 const cx = x + w / 2, cy = y + h * 0.25;
-                ctx.fillStyle = '#ff66aa';
-                for (let a = 0; a < 5; a++) {
-                    const angle = (a / 5) * Math.PI * 2 - Math.PI / 2;
+                ctx.fillStyle = petalColors[pi];
+                for (let a = 0; a < numPetals; a++) {
+                    const angle = (a / numPetals) * Math.PI * 2 + rotation;
                     ctx.beginPath();
                     ctx.ellipse(cx + Math.cos(angle) * 6, cy + Math.sin(angle) * 6, 5, 3, angle, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 // Mitt
-                ctx.fillStyle = '#ffdd33';
+                ctx.fillStyle = midColors[mi];
                 ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
             },
             'Matta': (x, y, w, h) => {
@@ -1018,7 +1078,7 @@
             ctx.save();
             const drawer = itemDrawers[item.name] || dekorDrawers[item.name];
             if (drawer) {
-                drawer(item.x, item.y, item.w, item.h);
+                drawer(item.x, item.y, item.w, item.h, item.seed || 0);
             } else {
                 // Fallback: emoji
                 const fontSize = Math.max(item.w, item.h);
@@ -1432,7 +1492,8 @@
                     x: cx - sw / 2,
                     y: cy - sh / 2,
                     w: sw,
-                    h: sh
+                    h: sh,
+                    seed: Math.random()
                 });
             }
         }
