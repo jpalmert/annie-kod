@@ -1104,35 +1104,57 @@
                 ctx.stroke();
             },
             'Dusch': (x, y, w, h) => {
-                // Duschkabin sedd från sidan - glasvägg
-                ctx.fillStyle = 'rgba(200,220,240,0.3)';
-                ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.fill();
-                ctx.strokeStyle = '#99aabb';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.stroke();
-                // Ram
-                ctx.strokeStyle = '#aaa';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.stroke();
-                // Duschstång på väggen
+                // Golv/bas
+                ctx.fillStyle = '#ccddee';
+                ctx.fillRect(x, y + h - 6, w, 6);
+                // Avlopp
                 ctx.fillStyle = '#999';
-                ctx.fillRect(x + w * 0.75, y + h * 0.05, 3, h * 0.55);
-                // Duschhuvud
+                ctx.beginPath(); ctx.arc(x + w * 0.4, y + h - 3, 3, 0, Math.PI * 2); ctx.fill();
+                // Bakvägg (kakel-look)
+                ctx.fillStyle = '#e8eef4';
+                ctx.fillRect(x + w * 0.7, y, w * 0.3, h - 6);
+                ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                ctx.lineWidth = 0.5;
+                for (let i = 1; i < 8; i++) {
+                    ctx.beginPath(); ctx.moveTo(x + w * 0.7, y + i * h / 8); ctx.lineTo(x + w, y + i * h / 8); ctx.stroke();
+                }
+                // Duschstång på väggen
+                ctx.fillStyle = '#bbb';
+                ctx.fillRect(x + w * 0.82, y + h * 0.08, 3, h * 0.6);
+                // Duschhuvud (vinklad nedåt)
                 ctx.fillStyle = '#aaa';
-                ctx.beginPath(); ctx.ellipse(x + w * 0.76, y + h * 0.05, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.save();
+                ctx.translate(x + w * 0.83, y + h * 0.08);
+                ctx.rotate(0.3);
+                ctx.beginPath(); ctx.roundRect(-8, -4, 16, 7, 3); ctx.fill();
+                ctx.restore();
+                // Slang från huvud till stång
+                ctx.strokeStyle = '#bbb';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.83, y + h * 0.12);
+                ctx.quadraticCurveTo(x + w * 0.75, y + h * 0.25, x + w * 0.83, y + h * 0.35);
+                ctx.stroke();
                 // Vattenstrålar
-                ctx.strokeStyle = 'rgba(100,180,255,0.3)';
+                ctx.strokeStyle = 'rgba(100,180,255,0.35)';
                 ctx.lineWidth = 1;
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < 6; i++) {
+                    const sx = x + w * 0.72 + i * 4;
                     ctx.beginPath();
-                    ctx.moveTo(x + w * 0.68 + i * 4, y + h * 0.1);
-                    ctx.lineTo(x + w * 0.65 + i * 4, y + h * 0.55);
+                    ctx.moveTo(sx, y + h * 0.13);
+                    ctx.lineTo(sx - 5, y + h * 0.65);
                     ctx.stroke();
                 }
-                // Golv
-                ctx.fillStyle = '#bbccdd';
-                ctx.fillRect(x + 2, y + h - 5, w - 4, 5);
+                // Glasdörr (fram)
+                ctx.strokeStyle = 'rgba(150,180,210,0.6)';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(x + 2, y); ctx.lineTo(x + 2, y + h - 6); ctx.stroke();
+                // Dörrhandtag
+                ctx.fillStyle = '#aaa';
+                ctx.beginPath(); ctx.arc(x + 6, y + h * 0.45, 3, 0, Math.PI * 2); ctx.fill();
+                // Övre ram
+                ctx.fillStyle = '#aaa';
+                ctx.fillRect(x, y, w, 3);
             },
             'Badkar': (x, y, w, h) => {
                 // Badkar sett från sidan
@@ -1178,35 +1200,51 @@
             },
             'Toalett': (x, y, w, h) => {
                 // Toalett sedd från sidan
-                // Cistern (baktill, uppe)
-                ctx.fillStyle = '#eee';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.55, y, w * 0.4, h * 0.45, 3); ctx.fill();
+                // Cistern (rektangulär, baktill uppe)
+                const cGrad = ctx.createLinearGradient(x + w * 0.5, 0, x + w, 0);
+                cGrad.addColorStop(0, '#f0f0f0');
+                cGrad.addColorStop(1, '#ddd');
+                ctx.fillStyle = cGrad;
+                ctx.beginPath(); ctx.roundRect(x + w * 0.52, y + h * 0.05, w * 0.45, h * 0.4, 3); ctx.fill();
                 ctx.strokeStyle = '#ccc';
                 ctx.lineWidth = 1;
-                ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(x + w * 0.52, y + h * 0.05, w * 0.45, h * 0.4, 3); ctx.stroke();
                 // Spolknapp
-                ctx.fillStyle = '#ccc';
-                ctx.beginPath(); ctx.roundRect(x + w * 0.65, y + 2, w * 0.2, 5, 2); ctx.fill();
-                // Skålen (från sidan)
-                ctx.fillStyle = '#fff';
+                ctx.fillStyle = '#bbb';
+                ctx.beginPath(); ctx.roundRect(x + w * 0.65, y + h * 0.07, w * 0.18, 4, 2); ctx.fill();
+
+                // Skålen - sidoprofil med rundad form
+                const bGrad = ctx.createLinearGradient(x, 0, x + w * 0.6, 0);
+                bGrad.addColorStop(0, '#fff');
+                bGrad.addColorStop(1, '#eee');
+                ctx.fillStyle = bGrad;
                 ctx.beginPath();
-                ctx.moveTo(x + w * 0.55, y + h * 0.4);
-                ctx.lineTo(x + w * 0.55, y + h * 0.85);
-                ctx.quadraticCurveTo(x + w * 0.55, y + h, x + w * 0.35, y + h);
-                ctx.lineTo(x + w * 0.1, y + h);
-                ctx.quadraticCurveTo(x, y + h, x, y + h * 0.8);
-                ctx.quadraticCurveTo(x, y + h * 0.45, x + w * 0.2, y + h * 0.4);
+                ctx.moveTo(x + w * 0.58, y + h * 0.35);
+                ctx.lineTo(x + w * 0.58, y + h * 0.7);
+                // Botten av skålen - rundat
+                ctx.quadraticCurveTo(x + w * 0.58, y + h * 0.95, x + w * 0.3, y + h * 0.95);
+                ctx.lineTo(x + w * 0.15, y + h * 0.95);
+                ctx.quadraticCurveTo(x - w * 0.02, y + h * 0.95, x + w * 0.02, y + h * 0.7);
+                // Framsida av skålen - buktad utåt
+                ctx.quadraticCurveTo(x - w * 0.02, y + h * 0.5, x + w * 0.1, y + h * 0.42);
                 ctx.closePath();
                 ctx.fill();
                 ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
                 ctx.stroke();
-                // Lock/sits (linje ovanpå)
-                ctx.strokeStyle = '#ddd';
-                ctx.lineWidth = 2;
+
+                // Sits/lock ovanpå skålen
+                ctx.fillStyle = '#f8f8f8';
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(x + w * 0.55, y + h * 0.4);
-                ctx.quadraticCurveTo(x + w * 0.1, y + h * 0.33, x + w * 0.05, y + h * 0.45);
+                ctx.moveTo(x + w * 0.58, y + h * 0.35);
+                ctx.quadraticCurveTo(x + w * 0.3, y + h * 0.3, x + w * 0.08, y + h * 0.4);
+                ctx.strokeStyle = '#ddd';
                 ctx.stroke();
+
+                // Fot
+                ctx.fillStyle = '#eee';
+                ctx.fillRect(x + w * 0.15, y + h * 0.92, w * 0.35, h * 0.08);
             },
             'Handfat': (x, y, w, h) => {
                 // Handfat sett från sidan
