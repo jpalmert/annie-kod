@@ -46,6 +46,7 @@
         .tab-btn:hover { transform: scale(1.05); }
         .tab-btn.active { box-shadow: 0 0 12px rgba(255,255,255,0.4); transform: scale(1.08); }
         #btn-mobler { background: #ff9933; color: #000; }
+        #btn-badrum { background: #77bbdd; color: #000; }
         #btn-dekor { background: #33ccff; color: #000; }
         #btn-vagar { background: #77dd77; color: #000; }
         #btn-golv { background: #ddaa77; color: #000; }
@@ -69,6 +70,7 @@
     <canvas id="game" width="700" height="520"></canvas>
     <div id="toolbar">
         <button class="tab-btn active" id="btn-mobler" onclick="setTab('mobler')">🛋️ Möbler</button>
+        <button class="tab-btn" id="btn-badrum" onclick="setTab('badrum')">🚿 Badrum</button>
         <button class="tab-btn" id="btn-dekor" onclick="setTab('dekor')">🖼️ Dekor</button>
         <button class="tab-btn" id="btn-vagar" onclick="setTab('vagar')">🎨 Väggar</button>
         <button class="tab-btn" id="btn-golv" onclick="setTab('golv')">🟫 Golv</button>
@@ -225,7 +227,9 @@
                 { name: 'Skrivbord',  icon: '🖥️', w: 80, h: 50 },  // 120x75cm
                 { name: 'Garderob',   icon: '🚪', w: 80, h: 133 },  // 120x200cm
                 { name: 'Byrå',       icon: '🗄️', w: 53, h: 60 },  // 80x90cm
-                { name: 'Dusch',      icon: '🚿', w: 60, h: 133 }, // 90x200cm
+            ],
+            badrum: [
+                { name: 'Dusch',      icon: '🚿', w: 53, h: 80 },  // 80x120cm
                 { name: 'Badkar',     icon: '🛁', w: 107, h: 53 }, // 160x80cm
                 { name: 'Toalett',    icon: '🚽', w: 33, h: 50 },  // 50x75cm
                 { name: 'Handfat',    icon: '🚰', w: 40, h: 53 },  // 60x80cm
@@ -1489,7 +1493,7 @@
 
             paletteItems = [];
 
-            if (currentTab === 'mobler' || currentTab === 'dekor') {
+            if (currentTab === 'mobler' || currentTab === 'dekor' || currentTab === 'badrum') {
                 const items = categories[currentTab];
                 const totalW = items.length * 62;
                 const startX = Math.max(5, (W - totalW) / 2);
