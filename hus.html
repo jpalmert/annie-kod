@@ -299,8 +299,8 @@
         let ratingScore = 0;
         let ratingTimer = 0;
         let visitCountdown = 600 * 10; // 10 minuter (60fps * 60sek * 10min)
-        let visitorArriving = false;
-        let visitorTimer = 0;
+        let visitor = null; // besökaren
+        let visitorPhase = 'none'; // none, walking, looking, rating, leaving
         let mouseX = 0, mouseY = 0; // musposition för förhandsvisning
 
         function setTab(tab) {
@@ -428,11 +428,51 @@
             if (doorOpenAnim > 0) doorOpenAnim -= 0.04;
 
             // Nedräkning till besök
-            if (visitCountdown > 0) {
+            if (visitCountdown > 0 && visitorPhase === 'none') {
                 visitCountdown--;
                 if (visitCountdown <= 0) {
-                    rateHouse();
-                    visitCountdown = 600 * 10; // nästa besök om 10 min
+                    // Besökare anländer!
+                    visitor = { x: -40, y: FLOOR_Y + 40, targetX: W / 2, lookTimer: 0, roomsVisited: 0 };
+                    visitorPhase = 'walking';
+                    currentRoom = 0; // besökaren börjar i vardagsrummet
+                }
+            }
+
+            // Uppdatera besökare
+            if (visitor && visitorPhase === 'walking') {
+                visitor.x += 3;
+                if (visitor.x >= visitor.targetX) {
+                    visitor.x = visitor.targetX;
+                    visitorPhase = 'looking';
+                    visitor.lookTimer = 120; // tittar runt i 2 sek
+                }
+            } else if (visitorPhase === 'looking') {
+                visitor.lookTimer--;
+                if (visitor.lookTimer <= 0) {
+                    visitor.roomsVisited++;
+                    if (visitor.roomsVisited < 4) {
+                        // Gå till nästa rum
+                        currentRoom = visitor.roomsVisited;
+                        visitor.x = -40;
+                        visitor.targetX = W / 2;
+                        visitorPhase = 'walking';
+                    } else {
+                        // Klar - ge betyg
+                        visitorPhase = 'rating';
+                        rateHouse();
+                    }
+                }
+            } else if (visitorPhase === 'rating') {
+                if (ratingTimer <= 0) {
+                    visitorPhase = 'leaving';
+                }
+            } else if (visitorPhase === 'leaving') {
+                visitor.x += 4;
+                if (visitor.x > W + 50) {
+                    visitor = null;
+                    visitorPhase = 'none';
+                    visitCountdown = 600 * 10;
+                    currentRoom = 0;
                 }
             }
             if (roomTransition > 0) { roomTransition--; return; }
@@ -610,6 +650,11 @@
 
             // Rita spelaren
             drawPlayer();
+
+            // Rita besökaren
+            if (visitor && visitorPhase !== 'none') {
+                drawVisitor();
+            }
 
             // Förhandsvisning av vald möbel (genomskinlig, med vald storlek)
             if (selectedItem && currentTab !== 'radera' && mouseY < H - PAL_H) {
@@ -1756,6 +1801,94 @@
             ctx.beginPath();
             ctx.ellipse(9, -17, 4, 3, 0, 0, Math.PI * 2);
             ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawVisitor() {
+            ctx.save();
+            const S = 1.4;
+            const bob = Math.sin(Date.now() * 0.005) * 2;
+            ctx.translate(visitor.x, visitor.y + bob);
+            ctx.scale(S, S);
+
+            // Skugga
+            ctx.beginPath();
+            ctx.ellipse(0, 30, 14, 4, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fill();
+
+            // Ben
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(-6, 14, 8, 18);
+            ctx.fillRect(2, 14, 8, 18);
+            // Skor
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.roundRect(-7, 30, 10, 5, 2); ctx.fill();
+            ctx.beginPath(); ctx.roundRect(2, 30, 10, 5, 2); ctx.fill();
+
+            // Kropp (kavaj)
+            ctx.fillStyle = '#334';
+            ctx.beginPath(); ctx.roundRect(-12, -10, 24, 26, 4); ctx.fill();
+            // Skjorta
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-4, -8, 8, 20);
+            // Slips
+            ctx.fillStyle = '#cc2222';
+            ctx.beginPath();
+            ctx.moveTo(0, -6);
+            ctx.lineTo(3, 4);
+            ctx.lineTo(0, 10);
+            ctx.lineTo(-3, 4);
+            ctx.closePath();
+            ctx.fill();
+
+            // Armar
+            ctx.fillStyle = '#334';
+            ctx.fillRect(-16, -6, 6, 18);
+            ctx.fillRect(10, -6, 6, 18);
+            // Händer
+            ctx.fillStyle = '#ffcc99';
+            ctx.beginPath(); ctx.arc(-13, 14, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(13, 14, 4, 0, Math.PI * 2); ctx.fill();
+
+            // Clipboard
+            if (visitorPhase === 'looking') {
+                ctx.fillStyle = '#ddc';
+                ctx.fillRect(14, 2, 10, 14);
+                ctx.fillStyle = '#886';
+                ctx.fillRect(14, 0, 10, 3);
+            }
+
+            // Huvud
+            ctx.fillStyle = '#ffcc99';
+            ctx.beginPath(); ctx.ellipse(0, -22, 12, 13, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Hår (kort, mörkt)
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(0, -28, 12, 8, 0, Math.PI, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillRect(-12, -30, 24, 4);
+
+            // Glasögon
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.rect(-8, -24, 7, 5); ctx.stroke();
+            ctx.beginPath(); ctx.rect(1, -24, 7, 5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(-1, -22); ctx.lineTo(1, -22); ctx.stroke();
+
+            // Ögon
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(-5, -22, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(4, -22, 1.5, 0, Math.PI * 2); ctx.fill();
+
+            // Mun
+            ctx.strokeStyle = '#aa5544';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(0, -15, 4, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
 
             ctx.restore();
         }
