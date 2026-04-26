@@ -1035,19 +1035,49 @@
                 ctx.strokeRect(x + 10, y + 7, w - 20, h - 14);
             },
             'Spegel': (x, y, w, h) => {
-                // Ram
-                ctx.fillStyle = '#aa8833';
-                ctx.beginPath(); ctx.roundRect(x, y, w, h, 3); ctx.fill();
-                // Glas
-                const grad = ctx.createLinearGradient(x, y, x + w, y + h);
-                grad.addColorStop(0, '#ddeeff');
-                grad.addColorStop(0.5, '#fff');
-                grad.addColorStop(1, '#ccddee');
-                ctx.fillStyle = grad;
-                ctx.beginPath(); ctx.roundRect(x + 3, y + 3, w - 6, h - 6, 2); ctx.fill();
-                // Reflektion
-                ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                ctx.fillRect(x + 5, y + 5, w * 0.3, h * 0.5);
+                // Yttre ram (ornament)
+                const ramGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+                ramGrad.addColorStop(0, '#d4a840');
+                ramGrad.addColorStop(0.3, '#f0d060');
+                ramGrad.addColorStop(0.5, '#d4a840');
+                ramGrad.addColorStop(0.7, '#f0d060');
+                ramGrad.addColorStop(1, '#b8902a');
+                ctx.fillStyle = ramGrad;
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 5); ctx.fill();
+                // Inre ram
+                ctx.fillStyle = '#c49830';
+                ctx.beginPath(); ctx.roundRect(x + 2, y + 2, w - 4, h - 4, 4); ctx.fill();
+                // Glaset
+                const glassGrad = ctx.createLinearGradient(x, y, x + w * 0.7, y + h);
+                glassGrad.addColorStop(0, '#e8f0ff');
+                glassGrad.addColorStop(0.3, '#f8fcff');
+                glassGrad.addColorStop(0.6, '#dde8f4');
+                glassGrad.addColorStop(1, '#c8d8e8');
+                ctx.fillStyle = glassGrad;
+                ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 3); ctx.fill();
+                // Reflektion (diagonalt ljus)
+                ctx.save();
+                ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 3); ctx.clip();
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.beginPath();
+                ctx.moveTo(x + 4, y + 4);
+                ctx.lineTo(x + w * 0.5, y + 4);
+                ctx.lineTo(x + 4, y + h * 0.6);
+                ctx.closePath();
+                ctx.fill();
+                // Liten extra glans
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.5, y + 4);
+                ctx.lineTo(x + w * 0.7, y + 4);
+                ctx.lineTo(x + 4, y + h * 0.85);
+                ctx.lineTo(x + 4, y + h * 0.6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+                // Liten dekor på toppen av ramen
+                ctx.fillStyle = '#d4a840';
+                ctx.beginPath(); ctx.arc(x + w / 2, y + 1, 4, 0, Math.PI * 2); ctx.fill();
             },
             'Hjärta': (x, y, w, h) => {
                 const cx = x + w / 2, cy = y + h * 0.35;
