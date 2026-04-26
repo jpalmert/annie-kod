@@ -298,7 +298,7 @@
         let showRating = false;
         let ratingScore = 0;
         let ratingTimer = 0;
-        let visitCountdown = 600 * 10; // 10 minuter (60fps * 60sek * 10min)
+        let visitCountdown = 60 * 60 * 10; // 10 minuter (60fps * 60sek * 10min)
         let visitor = null; // besökaren
         let visitorPhase = 'none'; // none, walking, looking, rating, leaving
         let mouseX = 0, mouseY = 0; // musposition för förhandsvisning
@@ -471,7 +471,7 @@
                 if (visitor.x > W + 50) {
                     visitor = null;
                     visitorPhase = 'none';
-                    visitCountdown = 600 * 10;
+                    visitCountdown = 60 * 60 * 10;
                     currentRoom = 0;
                 }
             }
