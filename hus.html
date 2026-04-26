@@ -46,6 +46,7 @@
         .tab-btn:hover { transform: scale(1.05); }
         .tab-btn.active { box-shadow: 0 0 12px rgba(255,255,255,0.4); transform: scale(1.08); }
         #btn-mobler { background: #ff9933; color: #000; }
+        #btn-kok { background: #ffaa55; color: #000; }
         #btn-badrum { background: #77bbdd; color: #000; }
         #btn-dekor { background: #33ccff; color: #000; }
         #btn-vagar { background: #77dd77; color: #000; }
@@ -70,6 +71,7 @@
     <canvas id="game" width="700" height="520"></canvas>
     <div id="toolbar">
         <button class="tab-btn active" id="btn-mobler" onclick="setTab('mobler')">🛋️ Möbler</button>
+        <button class="tab-btn" id="btn-kok" onclick="setTab('kok')">🍳 Kök</button>
         <button class="tab-btn" id="btn-badrum" onclick="setTab('badrum')">🚿 Badrum</button>
         <button class="tab-btn" id="btn-dekor" onclick="setTab('dekor')">🖼️ Dekor</button>
         <button class="tab-btn" id="btn-vagar" onclick="setTab('vagar')">🎨 Väggar</button>
@@ -233,6 +235,12 @@
                 { name: 'Badkar',     icon: '🛁', w: 107, h: 53 }, // 160x80cm
                 { name: 'Toalett',    icon: '🚽', w: 33, h: 50 },  // 50x75cm
                 { name: 'Handfat',    icon: '🚰', w: 40, h: 53 },  // 60x80cm
+            ],
+            kok: [
+                { name: 'Kylskåp',    icon: '🧊', w: 47, h: 120 }, // 70x180cm
+                { name: 'Frys',       icon: '❄️', w: 47, h: 60 },  // 70x90cm
+                { name: 'Spis',       icon: '🍳', w: 47, h: 60 },  // 70x90cm
+                { name: 'Diskbänk',   icon: '🧽', w: 80, h: 47 },  // 120x70cm
             ],
             dekor: [
                 { name: 'Tavla',      icon: '🖼️', w: 40, h: 33 },  // 60x50cm
@@ -1493,7 +1501,7 @@
 
             paletteItems = [];
 
-            if (currentTab === 'mobler' || currentTab === 'dekor' || currentTab === 'badrum') {
+            if (currentTab === 'mobler' || currentTab === 'dekor' || currentTab === 'badrum' || currentTab === 'kok') {
                 const items = categories[currentTab];
                 const totalW = items.length * 62;
                 const startX = Math.max(5, (W - totalW) / 2);
