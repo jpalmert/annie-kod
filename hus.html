@@ -662,13 +662,21 @@
                 return;
             }
 
-            // Dörr från sidan - brunt streck längs kanten
-            const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(doorX, dr.y, 8, dr.h);
+            // Hur nära är spelaren? (0 = långt bort, 1 = precis vid)
+            const dist = Math.abs(player.x - (dr.x + dr.w / 2));
+            const openAmount = Math.max(0, 1 - dist / 100); // 0-1
 
-            // Handtag (gul prick på insidan av dörren)
-            const knobX = door.wall === 'left' ? doorX + 12 : doorX - 4;
+            // Dörr från sidan - bredd minskar när den öppnas (roterar bort)
+            const doorX = door.wall === 'left' ? dr.x : dr.x + dr.w - 8;
+            const doorW = 8 + openAmount * 30; // bredare = mer öppen (ser mer av dörren)
+            const actualX = door.wall === 'left' ? doorX : doorX + 8 - doorW;
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.roundRect(actualX, dr.y, doorW, dr.h, 2);
+            ctx.fill();
+
+            // Handtag (gul prick)
+            const knobX = door.wall === 'left' ? actualX + doorW + 4 : actualX - 4;
             ctx.fillStyle = '#ffd700';
             ctx.beginPath();
             ctx.arc(knobX, dr.y + dr.h / 2, 4, 0, Math.PI * 2);
