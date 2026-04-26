@@ -638,6 +638,17 @@
             ctx.textBaseline = 'top';
             ctx.fillText(room.name, W / 2, 15);
 
+            // Ytterdörr i vardagsrummet (vänster sida)
+            if (currentRoom === 0) {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(0, FLOOR_Y - 10, 8, 133);
+                // Handtag
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(12, FLOOR_Y - 10 + 66, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
             // Rita dörrar
             for (const door of room.doors) {
                 drawDoor(door);
