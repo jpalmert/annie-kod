@@ -662,27 +662,14 @@
                 return;
             }
 
-            // Dörrram (från sidan - mörk öppning i väggen)
-            ctx.fillStyle = '#222';
-            ctx.fillRect(dr.x, dr.y, dr.w, dr.h);
-
-            // Dörrkarmen
+            // Dörr från sidan - ett brunt streck med gul prick
             ctx.fillStyle = '#8B4513';
-            ctx.fillRect(dr.x, dr.y, dr.w, 5);        // överkarm
-            ctx.fillRect(dr.x, dr.y, 5, dr.h);        // vänster karm
-            ctx.fillRect(dr.x + dr.w - 5, dr.y, 5, dr.h); // höger karm
+            ctx.fillRect(dr.x + dr.w / 2 - 4, dr.y, 8, dr.h);
 
-            // Öppen dörr (sedd från sidan - smal rektangel vinklad)
-            const doorGrad = ctx.createLinearGradient(dr.x + 6, 0, dr.x + 6 + 15, 0);
-            doorGrad.addColorStop(0, '#D2691E');
-            doorGrad.addColorStop(1, '#A0522D');
-            ctx.fillStyle = doorGrad;
-            ctx.fillRect(dr.x + 6, dr.y + 5, 15, dr.h - 5);
-
-            // Dörrhandtag (liten knopp på sidan)
+            // Handtag (gul prick i mitten)
             ctx.fillStyle = '#ffd700';
             ctx.beginPath();
-            ctx.arc(dr.x + 20, dr.y + dr.h * 0.5, 3, 0, Math.PI * 2);
+            ctx.arc(dr.x + dr.w / 2, dr.y + dr.h / 2, 4, 0, Math.PI * 2);
             ctx.fill();
 
             // Text
