@@ -506,7 +506,8 @@
         function enterRoom(door) {
             if (door.wall === 'left' || door.wall === 'right') {
                 doorOpenAnim = 1;
-                doorOpenSide = door.wall;
+                // Motsatt sida i nya rummet
+                doorOpenSide = door.wall === 'left' ? 'right' : 'left';
             }
             currentRoom = door.toRoom;
             roomTransition = 15;
