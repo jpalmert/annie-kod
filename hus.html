@@ -338,49 +338,61 @@
             const kok = rooms[1];
             const sovrum = rooms[2];
             const badrum = rooms[3];
+            const luck = Math.random();
 
-            // ⭐ 1: Sovrummet har en säng och vardagsrummet har en soffa
-            if (roomHas(sovrum, 'Säng') && roomHas(vardagsrum, 'Soffa')) score++;
-
-            // ⭐ 2: Köket har bord och stol, badrummet har toalett och handfat
-            if (roomHas(kok, 'Bord') && roomHas(kok, 'Stol') &&
-                roomHas(badrum, 'Toalett') && roomHas(badrum, 'Handfat')) score++;
-
-            // ⭐ 3: Varje rum har minst en lampa eller ljus, och det finns dekor i minst 2 rum
+            // Samla info
+            let totalItems = 0;
             let roomsWithLight = 0;
             let roomsWithDekor = 0;
-            for (const room of rooms) {
-                if (roomHas(room, 'Lampa') || roomHas(room, 'Ljus')) roomsWithLight++;
-                if (room.items.some(i => ['Tavla','Växt','Blomma','Nalle','Hjärta','Stjärna','Klocka'].includes(i.name))) roomsWithDekor++;
-            }
-            if (roomsWithLight >= 4 && roomsWithDekor >= 2) score++;
-
-            // ⭐ 4: Alla väggar eller golv ändrade, och varje rum har 3+ saker
             let changedColors = 0;
-            let allRoomsHave3 = true;
-            for (let i = 0; i < rooms.length; i++) {
-                if (!defaultWalls.includes(rooms[i].wallColor)) changedColors++;
-                if (!defaultFloors.includes(rooms[i].floorColor)) changedColors++;
-                if (rooms[i].items.length < 3) allRoomsHave3 = false;
-            }
-            if (changedColors >= 6 && allRoomsHave3) score++;
-
-            // ⭐ 5: Allt ovan plus: garderob i sovrummet, bokhylla nånstans,
-            //        TV i vardagsrummet, matta i minst 2 rum, 25+ saker totalt
-            let totalItems = 0;
             let roomsWithMatta = 0;
+            let minItems = 999;
             for (const room of rooms) {
                 totalItems += room.items.length;
+                if (room.items.length < minItems) minItems = room.items.length;
+                if (roomHas(room, 'Lampa') || roomHas(room, 'Ljus')) roomsWithLight++;
+                if (room.items.some(i => ['Tavla','Växt','Blomma','Nalle','Hjärta','Stjärna','Klocka'].includes(i.name))) roomsWithDekor++;
                 if (roomHas(room, 'Matta')) roomsWithMatta++;
+                if (!defaultWalls.includes(room.wallColor)) changedColors++;
+                if (!defaultFloors.includes(room.floorColor)) changedColors++;
             }
-            if (score >= 4 &&
-                roomHas(sovrum, 'Garderob') &&
-                rooms.some(r => roomHas(r, 'Bokhylla')) &&
-                roomHas(vardagsrum, 'TV') &&
-                (roomHas(badrum, 'Dusch') || roomHas(badrum, 'Badkar')) &&
-                roomHas(badrum, 'Spegel') &&
-                roomsWithMatta >= 2 &&
-                totalItems >= 25) score++;
+
+            // ⭐ 1: Grundmöbler - ibland räcker det med lite, ibland krävs mer
+            const star1Options = [
+                roomHas(sovrum, 'Säng') && roomHas(vardagsrum, 'Soffa'),
+                roomHas(kok, 'Bord') && roomHas(kok, 'Stol'),
+                totalItems >= 4 + Math.floor(luck * 4),
+                roomHas(vardagsrum, 'Soffa') && roomHas(vardagsrum, 'TV'),
+            ];
+            if (star1Options[Math.floor(luck * star1Options.length)]) score++;
+
+            // ⭐ 2: Rätt saker i rätt rum
+            const star2Options = [
+                roomHas(kok, 'Bord') && roomHas(kok, 'Stol') && roomHas(badrum, 'Toalett'),
+                roomHas(sovrum, 'Säng') && roomHas(badrum, 'Handfat') && roomHas(vardagsrum, 'Soffa'),
+                roomHas(badrum, 'Toalett') && roomHas(badrum, 'Handfat') && roomHas(sovrum, 'Säng'),
+                roomHas(kok, 'Kylskåp') && roomHas(kok, 'Spis') && roomHas(sovrum, 'Säng'),
+            ];
+            if (score >= 1 && star2Options[Math.floor(luck * 7) % star2Options.length]) score++;
+
+            // ⭐ 3: Belysning och dekor
+            const needLights = 2 + Math.floor(luck * 3); // 2-4 rum
+            const needDekor = 1 + Math.floor(luck * 2);  // 1-2 rum
+            if (score >= 2 && roomsWithLight >= needLights && roomsWithDekor >= needDekor) score++;
+
+            // ⭐ 4: Färger och fullt möblerat
+            const needColors = 3 + Math.floor(luck * 4); // 3-6 ändrade
+            const needPerRoom = 2 + Math.floor(luck * 2); // 2-3 per rum
+            if (score >= 3 && changedColors >= needColors && minItems >= needPerRoom) score++;
+
+            // ⭐ 5: Fullt hus - krav varierar
+            const star5Options = [
+                roomHas(sovrum, 'Garderob') && roomHas(vardagsrum, 'TV') && roomsWithMatta >= 2 && totalItems >= 20,
+                rooms.some(r => roomHas(r, 'Bokhylla')) && (roomHas(badrum, 'Dusch') || roomHas(badrum, 'Badkar')) && totalItems >= 22,
+                roomHas(badrum, 'Spegel') && roomHas(kok, 'Kylskåp') && roomHas(sovrum, 'Garderob') && totalItems >= 18,
+                roomsWithMatta >= 2 && roomHas(vardagsrum, 'TV') && roomHas(vardagsrum, 'Bokhylla') && changedColors >= 6 && totalItems >= 24,
+            ];
+            if (score >= 4 && star5Options[Math.floor(luck * 13) % star5Options.length]) score++;
 
             ratingScore = score;
             pengar += score * 100;
